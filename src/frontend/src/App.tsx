@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { DepotPage } from "@/pages/DepotPage";
+import { DocumentationPage } from "@/pages/DocumentationPage";
 import { HomePage } from "@/pages/HomePage";
 import { RemindersPage } from "@/pages/RemindersPage";
 import { SplashPage } from "@/pages/SplashPage";
@@ -54,6 +55,12 @@ const remindersRoute = createRoute({
   component: RemindersPage,
 });
 
+const docsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/docs",
+  component: DocumentationPage,
+});
+
 const catchAllRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "*",
@@ -70,6 +77,7 @@ const routeTree = rootRoute.addChildren([
   depotRoute,
   trackRoute,
   remindersRoute,
+  docsRoute,
   catchAllRoute,
 ]);
 
