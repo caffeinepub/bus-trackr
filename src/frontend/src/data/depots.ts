@@ -12,6 +12,12 @@ import { JIND_ROUTES, NARWANA_ROUTES, SAFIDON_ROUTES } from "./jind";
 import { KAITHAL_ROUTES } from "./kaithal";
 import { KARNAL_ROUTES } from "./karnal";
 import { KURUKSHETRA_ROUTES } from "./kurukshetra";
+import {
+  KANINA_ROUTES,
+  MAHENDERGARH_ROUTES,
+  NARNAUL_ROUTES,
+  SATNALI_ROUTES,
+} from "./narnaul";
 import { PANCHKULA_ROUTES } from "./panchkula";
 import { PANIPAT_ROUTES } from "./panipat";
 import { ROHTAK_ROUTES } from "./rohtak";
@@ -148,10 +154,31 @@ export const DEPOTS: Depot[] = [
     district: "Kurukshetra",
   },
   {
-    id: "mahendragarh",
-    name: "Mahendragarh",
-    buses: 25,
-    routes: 6,
+    id: "narnaul",
+    name: "Narnaul",
+    buses: 120,
+    routes: 40,
+    district: "Mahendragarh",
+  },
+  {
+    id: "mahendergarh",
+    name: "Mahendergarh",
+    buses: 80,
+    routes: 30,
+    district: "Mahendragarh",
+  },
+  {
+    id: "kanina",
+    name: "Kanina",
+    buses: 60,
+    routes: 20,
+    district: "Mahendragarh",
+  },
+  {
+    id: "satnali",
+    name: "Satnali",
+    buses: 40,
+    routes: 15,
     district: "Mahendragarh",
   },
   {
@@ -212,35 +239,10 @@ export const DEPOT_ROUTES: Record<string, BusRoute[]> = {
   kaithal: KAITHAL_ROUTES,
   karnal: KARNAL_ROUTES,
   kurukshetra: KURUKSHETRA_ROUTES,
-  mahendragarh: [
-    {
-      id: "mhg-01",
-      number: "HR-121",
-      origin: "Mahendragarh",
-      destination: "Delhi ISBT",
-      departures: DEP_3H,
-      stops: ["Mahendragarh", "Narnaul", "Rewari", "Gurugram", "Delhi ISBT"],
-      durationMinutes: 210,
-    },
-    {
-      id: "mhg-02",
-      number: "HR-122",
-      origin: "Mahendragarh",
-      destination: "Rewari",
-      departures: DEP_HOURLY,
-      stops: ["Mahendragarh", "Narnaul", "Rewari"],
-      durationMinutes: 70,
-    },
-    {
-      id: "mhg-03",
-      number: "HR-123",
-      origin: "Mahendragarh",
-      destination: "Bhiwani",
-      departures: DEP_2H,
-      stops: ["Mahendragarh", "Loharu", "Bhiwani"],
-      durationMinutes: 90,
-    },
-  ],
+  narnaul: NARNAUL_ROUTES,
+  mahendergarh: MAHENDERGARH_ROUTES,
+  kanina: KANINA_ROUTES,
+  satnali: SATNALI_ROUTES,
   nuh: [
     {
       id: "nuh-01",
