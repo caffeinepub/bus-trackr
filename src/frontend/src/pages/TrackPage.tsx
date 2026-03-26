@@ -1,17 +1,9 @@
 import { BottomNav } from "@/components/BottomNav";
-import { DEPOT_ROUTES, getAllRoutes, getCurrentStop } from "@/data/depots";
+import { getActiveRoutes, getAllRoutes, isRouteActive } from "@/data/depots";
 import type { BusRoute } from "@/data/depots";
 import { useSearch } from "@tanstack/react-router";
 import { Bus, Clock, MapPin, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
-
-const LIVE_ROUTES: BusRoute[] = [
-  DEPOT_ROUTES.ambala[1],
-  DEPOT_ROUTES.gurugram[0],
-  DEPOT_ROUTES.rohtak[0],
-  DEPOT_ROUTES.panipat[0],
-  DEPOT_ROUTES.hisar[0],
-].filter(Boolean);
 
 function formatTime(date: Date) {
   return date.toLocaleTimeString("en-IN", {
@@ -31,12 +23,40 @@ function getNextDeparture(route: BusRoute): string | null {
   return null;
 }
 
+function getCurrentStopForRoute(route: BusRoute): {
+  stopIndex: number;
+  progressPct: number;
+} {
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  let activeDepMin = -1;
+  for (const dep of route.departures) {
+    const [h, m] = dep.split(":").map(Number);
+    const depMin = h * 60 + m;
+    if (nowMin >= depMin && nowMin < depMin + route.durationMinutes) {
+      activeDepMin = depMin;
+      break;
+    }
+  }
+
+  if (activeDepMin < 0) return { stopIndex: 0, progressPct: 0 };
+
+  const elapsed = nowMin - activeDepMin;
+  const progressPct = Math.min((elapsed / route.durationMinutes) * 100, 100);
+  const stopIndex = Math.floor(
+    (elapsed / route.durationMinutes) * (route.stops.length - 1),
+  );
+  return { stopIndex, progressPct };
+}
+
 function RouteTimeline({ route }: { route: BusRoute }) {
-  const { stopIndex, progressPct } = getCurrentStop(route);
+  const active = isRouteActive(route);
+  const { stopIndex, progressPct } = getCurrentStopForRoute(route);
   const width = 340;
   const padding = 20;
   const lineWidth = width - padding * 2;
-  const stopSpacing = lineWidth / (route.stops.length - 1);
+  const stopSpacing = lineWidth / Math.max(route.stops.length - 1, 1);
 
   return (
     <div
@@ -56,13 +76,21 @@ function RouteTimeline({ route }: { route: BusRoute }) {
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <div
-            className="w-2 h-2 rounded-full pulse-dot"
-            style={{ background: "#22c55e" }}
-          />
-          <span className="text-xs" style={{ color: "#22c55e" }}>
-            Live
-          </span>
+          {active ? (
+            <>
+              <div
+                className="w-2 h-2 rounded-full pulse-dot"
+                style={{ background: "#22c55e" }}
+              />
+              <span className="text-xs" style={{ color: "#22c55e" }}>
+                Live
+              </span>
+            </>
+          ) : (
+            <span className="text-xs" style={{ color: "#A9B6C3" }}>
+              Scheduled
+            </span>
+          )}
         </div>
       </div>
 
@@ -86,15 +114,15 @@ function RouteTimeline({ route }: { route: BusRoute }) {
           <rect
             x={padding}
             y="35"
-            width={(progressPct / 100) * lineWidth}
+            width={active ? (progressPct / 100) * lineWidth : 0}
             height="4"
             rx="2"
             fill="#F28A2A"
           />
           {route.stops.map((stop, i) => {
             const cx = padding + i * stopSpacing;
-            const isPassed = i <= stopIndex;
-            const isCurrent = i === stopIndex;
+            const isPassed = active && i <= stopIndex;
+            const isCurrent = active && i === stopIndex;
             return (
               <g key={stop}>
                 {isCurrent && (
@@ -127,14 +155,16 @@ function RouteTimeline({ route }: { route: BusRoute }) {
               </g>
             );
           })}
-          <text
-            x={padding + (progressPct / 100) * lineWidth}
-            y="58"
-            textAnchor="middle"
-            fontSize="14"
-          >
-            🚌
-          </text>
+          {active && (
+            <text
+              x={padding + (progressPct / 100) * lineWidth}
+              y="58"
+              textAnchor="middle"
+              fontSize="14"
+            >
+              🚌
+            </text>
+          )}
         </svg>
       </div>
 
@@ -142,23 +172,36 @@ function RouteTimeline({ route }: { route: BusRoute }) {
         <div className="flex items-center gap-1">
           <MapPin size={12} style={{ color: "#A9B6C3" }} />
           <span className="text-xs" style={{ color: "#A9B6C3" }}>
-            At:{" "}
-            <span className="text-white">
-              {route.stops[stopIndex] ?? route.stops[0]}
-            </span>
+            {active ? (
+              <>
+                At:{" "}
+                <span className="text-white">
+                  {route.stops[stopIndex] ?? route.stops[0]}
+                </span>
+              </>
+            ) : (
+              <>
+                Next dep:{" "}
+                <span style={{ color: "#2A8CFF" }}>
+                  {getNextDeparture(route) ?? "—"}
+                </span>
+              </>
+            )}
           </span>
         </div>
-        <div className="flex items-center gap-1">
-          <Clock size={12} style={{ color: "#A9B6C3" }} />
-          <span className="text-xs" style={{ color: "#A9B6C3" }}>
-            Next:{" "}
-            <span style={{ color: "#2A8CFF" }}>
-              {route.stops[
-                Math.min(stopIndex + 1, route.stops.length - 1)
-              ]?.split(" ")[0] ?? "Last Stop"}
+        {active && (
+          <div className="flex items-center gap-1">
+            <Clock size={12} style={{ color: "#A9B6C3" }} />
+            <span className="text-xs" style={{ color: "#A9B6C3" }}>
+              Next:{" "}
+              <span style={{ color: "#2A8CFF" }}>
+                {route.stops[
+                  Math.min(stopIndex + 1, route.stops.length - 1)
+                ]?.split(" ")[0] ?? "Last Stop"}
+              </span>
             </span>
-          </span>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -169,11 +212,13 @@ export function TrackPage() {
   const [tick, setTick] = useState(0);
   const { routeId } = useSearch({ from: "/track" });
 
+  // Recompute on every tick
+  const liveRoutes = getActiveRoutes();
   const selectedRoute = routeId
     ? (getAllRoutes().find((r) => r.id === routeId) ?? null)
     : null;
 
-  const otherLiveRoutes = LIVE_ROUTES.filter((r) => r.id !== routeId);
+  const otherLiveRoutes = liveRoutes.filter((r) => r.id !== routeId);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -206,7 +251,7 @@ export function TrackPage() {
         <div>
           <h1 className="font-bold text-white text-lg">Live Bus Tracker</h1>
           <p className="text-xs" style={{ color: "#A9B6C3" }}>
-            Auto-updates every 30s
+            {liveRoutes.length} buses in transit · Auto-updates every 30s
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -297,7 +342,15 @@ export function TrackPage() {
                   className="text-sm font-semibold mb-3"
                   style={{ color: "#A9B6C3" }}
                 >
-                  Other Active Buses
+                  Other Active Buses ({otherLiveRoutes.length})
+                </h2>
+              )}
+              {!selectedRoute && (
+                <h2
+                  className="text-sm font-semibold mb-3"
+                  style={{ color: "#A9B6C3" }}
+                >
+                  {liveRoutes.length} Active Buses Right Now
                 </h2>
               )}
               {otherLiveRoutes.map((route) => (
@@ -306,10 +359,42 @@ export function TrackPage() {
             </>
           )}
 
-          {!selectedRoute && LIVE_ROUTES.length === 0 && (
-            <p className="text-center text-sm" style={{ color: "#A9B6C3" }}>
-              No live routes available.
-            </p>
+          {liveRoutes.length === 0 && !selectedRoute && (
+            <div
+              className="rounded-2xl p-6 text-center mb-4"
+              style={{ background: "#152635", border: "1px solid #24384A" }}
+              data-ocid="track.empty_state"
+            >
+              <Bus
+                size={32}
+                style={{ color: "#A9B6C3" }}
+                className="mx-auto mb-3"
+              />
+              <p className="text-white font-semibold mb-1">
+                No buses currently in transit
+              </p>
+              <p className="text-xs" style={{ color: "#A9B6C3" }}>
+                Check next departures below or try again in a few minutes.
+              </p>
+            </div>
+          )}
+
+          {/* Show upcoming routes when no live buses */}
+          {liveRoutes.length === 0 && !selectedRoute && (
+            <div>
+              <h2
+                className="text-sm font-semibold mb-3"
+                style={{ color: "#A9B6C3" }}
+              >
+                Upcoming Routes
+              </h2>
+              {getAllRoutes()
+                .filter((r) => getNextDeparture(r) !== null)
+                .slice(0, 6)
+                .map((route) => (
+                  <RouteTimeline key={route.id} route={route} />
+                ))}
+            </div>
           )}
         </div>
 
