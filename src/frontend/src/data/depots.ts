@@ -18,6 +18,7 @@ import {
   NARNAUL_ROUTES,
   SATNALI_ROUTES,
 } from "./narnaul";
+import { NUH_ROUTES } from "./nuh";
 import { PANCHKULA_ROUTES } from "./panchkula";
 import { PANIPAT_ROUTES } from "./panipat";
 import { ROHTAK_ROUTES } from "./rohtak";
@@ -188,7 +189,7 @@ export const DEPOTS: Depot[] = [
     routes: 768,
     district: "Chandigarh",
   },
-  { id: "nuh", name: "Nuh (Mewat)", buses: 20, routes: 5, district: "Nuh" },
+  { id: "nuh", name: "Nuh (Mewat)", buses: 45, routes: 40, district: "Nuh" },
   { id: "palwal", name: "Palwal", buses: 27, routes: 7, district: "Palwal" },
   {
     id: "panchkula",
@@ -243,35 +244,7 @@ export const DEPOT_ROUTES: Record<string, BusRoute[]> = {
   mahendergarh: MAHENDERGARH_ROUTES,
   kanina: KANINA_ROUTES,
   satnali: SATNALI_ROUTES,
-  nuh: [
-    {
-      id: "nuh-01",
-      number: "HR-131",
-      origin: "Nuh",
-      destination: "Gurugram",
-      departures: DEP_HOURLY,
-      stops: ["Nuh", "Sohna", "Gurugram"],
-      durationMinutes: 60,
-    },
-    {
-      id: "nuh-02",
-      number: "HR-132",
-      origin: "Nuh",
-      destination: "Delhi ISBT",
-      departures: DEP_2H,
-      stops: ["Nuh", "Sohna", "Gurugram", "Delhi ISBT"],
-      durationMinutes: 120,
-    },
-    {
-      id: "nuh-03",
-      number: "HR-133",
-      origin: "Nuh",
-      destination: "Faridabad",
-      departures: DEP_2H,
-      stops: ["Nuh", "Palwal", "Faridabad"],
-      durationMinutes: 90,
-    },
-  ],
+  nuh: NUH_ROUTES,
   palwal: [
     {
       id: "plw-01",
