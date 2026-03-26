@@ -1,11 +1,23 @@
 import { BottomNav } from "@/components/BottomNav";
 import { DEPOTS } from "@/data/depots";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Bus, MapPin, Route } from "lucide-react";
+import { ArrowLeft, Bus, MapPin, Route, Search, X } from "lucide-react";
 import { motion } from "motion/react";
+import { useMemo, useState } from "react";
 
 export function StopsPage() {
   const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return DEPOTS;
+    const q = query.trim().toLowerCase();
+    return DEPOTS.filter(
+      (d) =>
+        d.name.toLowerCase().includes(q) ||
+        d.district.toLowerCase().includes(q),
+    );
+  }, [query]);
 
   return (
     <div
@@ -26,61 +38,113 @@ export function StopsPage() {
           type="button"
           data-ocid="stops.back.button"
           onClick={() => navigate({ to: "/home" })}
-          className="w-9 h-9 rounded-xl flex items-center justify-center"
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
           style={{ background: "#152635" }}
         >
           <ArrowLeft size={18} color="white" />
         </button>
-        <div>
+        <div className="min-w-0">
           <h1 className="font-bold text-white text-lg leading-tight">
             All Depots
           </h1>
           <p className="text-xs" style={{ color: "#A9B6C3" }}>
-            22 Haryana Districts
+            {query.trim()
+              ? `${filtered.length} of ${DEPOTS.length} depots`
+              : `${DEPOTS.length} depots across 22 districts`}
           </p>
         </div>
       </header>
 
       <main className="px-4 pt-4">
-        <div data-ocid="stops.list" className="grid grid-cols-2 gap-3">
-          {DEPOTS.map((depot, i) => (
-            <motion.button
+        {/* Search bar */}
+        <div
+          className="flex items-center gap-3 rounded-2xl px-4 py-3 mb-4"
+          style={{ background: "#152635", border: "1px solid #24384A" }}
+        >
+          <Search size={16} style={{ color: "#A9B6C3" }} className="shrink-0" />
+          <input
+            data-ocid="stops.search_input"
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search depot or district..."
+            className="flex-1 bg-transparent outline-none text-white placeholder:text-[#5A7A90] text-sm"
+          />
+          {query && (
+            <button
               type="button"
-              key={depot.id}
-              data-ocid={`stops.item.${i + 1}`}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.03 }}
-              onClick={() =>
-                navigate({ to: "/depot/$id", params: { id: depot.id } })
-              }
-              className="rounded-2xl p-4 text-left transition-all hover:scale-[1.02] active:scale-[0.98]"
-              style={{ background: "#152635", border: "1px solid #24384A" }}
+              data-ocid="stops.search_clear.button"
+              onClick={() => setQuery("")}
+              className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-opacity hover:opacity-80"
+              style={{ background: "#24384A" }}
             >
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
-                style={{ background: "rgba(242,138,42,0.15)" }}
-              >
-                <MapPin size={18} style={{ color: "#F28A2A" }} />
-              </div>
-              <p className="font-semibold text-white text-sm leading-tight mb-2">
-                {depot.name}
-              </p>
-              <div className="flex items-center gap-1 mb-1">
-                <Bus size={12} style={{ color: "#A9B6C3" }} />
-                <span className="text-xs" style={{ color: "#A9B6C3" }}>
-                  {depot.buses} Buses
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Route size={12} style={{ color: "#2A8CFF" }} />
-                <span className="text-xs" style={{ color: "#2A8CFF" }}>
-                  {depot.routes} Routes
-                </span>
-              </div>
-            </motion.button>
-          ))}
+              <X size={12} color="white" />
+            </button>
+          )}
         </div>
+
+        {filtered.length === 0 ? (
+          <motion.div
+            data-ocid="stops.empty_state"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="rounded-2xl p-8 text-center mt-4"
+            style={{ background: "#152635", border: "1px solid #24384A" }}
+          >
+            <MapPin
+              size={32}
+              style={{ color: "#24384A" }}
+              className="mx-auto mb-3"
+            />
+            <p className="text-white font-semibold">No depots found</p>
+            <p className="text-xs mt-1" style={{ color: "#A9B6C3" }}>
+              Try searching by district name
+            </p>
+          </motion.div>
+        ) : (
+          <div data-ocid="stops.list" className="grid grid-cols-2 gap-3">
+            {filtered.map((depot, i) => (
+              <motion.button
+                type="button"
+                key={depot.id}
+                data-ocid={`stops.item.${i + 1}`}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.03 }}
+                onClick={() =>
+                  navigate({ to: "/depot/$id", params: { id: depot.id } })
+                }
+                className="rounded-2xl p-4 text-left transition-all hover:scale-[1.02] active:scale-[0.98]"
+                style={{ background: "#152635", border: "1px solid #24384A" }}
+              >
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
+                  style={{ background: "rgba(242,138,42,0.15)" }}
+                >
+                  <MapPin size={18} style={{ color: "#F28A2A" }} />
+                </div>
+                <p className="font-semibold text-white text-sm leading-tight mb-0.5">
+                  {depot.name}
+                </p>
+                <p className="text-xs mb-2" style={{ color: "#5A7A90" }}>
+                  {depot.district}
+                </p>
+                <div className="flex items-center gap-1 mb-1">
+                  <Bus size={12} style={{ color: "#A9B6C3" }} />
+                  <span className="text-xs" style={{ color: "#A9B6C3" }}>
+                    {depot.buses} Buses
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Route size={12} style={{ color: "#2A8CFF" }} />
+                  <span className="text-xs" style={{ color: "#2A8CFF" }}>
+                    {depot.routes} Routes
+                  </span>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        )}
       </main>
 
       <BottomNav />

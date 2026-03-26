@@ -1,12 +1,19 @@
 import { BottomNav } from "@/components/BottomNav";
-import { DEPOTS, getAllStopNames, searchRoutesByStops } from "@/data/depots";
-import type { BusRoute } from "@/data/depots";
+import {
+  DEPOTS,
+  getAllStopNames,
+  searchConnectingRoutes,
+  searchRoutesByStops,
+} from "@/data/depots";
+import type { BusRoute, ConnectingRoute } from "@/data/depots";
 import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
+  ArrowRight,
   Bus,
   MapPin,
   Navigation,
+  RefreshCw,
   TrendingUp,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -162,11 +169,146 @@ function RouteResultCard({
   );
 }
 
+function ConnectingRouteCard({
+  connecting,
+  onTrack,
+}: { connecting: ConnectingRoute; onTrack: (id: string) => void }) {
+  const dep1 = getNextDeparture(connecting.leg1);
+  const dep2 = getNextDeparture(connecting.leg2);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl p-4"
+      style={{
+        background: "#152635",
+        border: "1px solid rgba(42,140,255,0.3)",
+      }}
+    >
+      {/* Header badges */}
+      <div className="flex items-center gap-2 mb-3">
+        <span
+          className="px-2 py-0.5 rounded-full text-xs font-bold"
+          style={{ background: "rgba(42,140,255,0.18)", color: "#2A8CFF" }}
+        >
+          1 Change
+        </span>
+        <span className="text-xs" style={{ color: "#A9B6C3" }}>
+          via {connecting.changeAt}
+        </span>
+      </div>
+
+      {/* Leg 1 */}
+      <div
+        className="rounded-xl p-3 mb-2"
+        style={{
+          background: "rgba(15,36,51,0.6)",
+          border: "1px solid #24384A",
+        }}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <span
+            className="px-1.5 py-0.5 rounded text-xs font-bold shrink-0"
+            style={{ background: "rgba(242,138,42,0.2)", color: "#F28A2A" }}
+          >
+            {connecting.leg1.number}
+          </span>
+          <span className="text-white text-xs font-medium truncate">
+            {connecting.leg1.origin} → {connecting.changeAt}
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Bus size={11} style={{ color: "#A9B6C3" }} />
+          <span
+            className="text-xs font-semibold"
+            style={{ color: dep1 ? "#22c55e" : "#A9B6C3" }}
+          >
+            {dep1 ? `Departs ${dep1}` : "Last bus departed"}
+          </span>
+        </div>
+      </div>
+
+      {/* Change indicator */}
+      <div className="flex items-center gap-2 my-2 px-1">
+        <div className="flex-1 h-px" style={{ background: "#24384A" }} />
+        <div className="flex items-center gap-1.5">
+          <RefreshCw size={11} style={{ color: "#2A8CFF" }} />
+          <span className="text-xs" style={{ color: "#2A8CFF" }}>
+            Change bus at {connecting.changeAt}
+          </span>
+        </div>
+        <div className="flex-1 h-px" style={{ background: "#24384A" }} />
+      </div>
+
+      {/* Leg 2 */}
+      <div
+        className="rounded-xl p-3 mb-3"
+        style={{
+          background: "rgba(15,36,51,0.6)",
+          border: "1px solid #24384A",
+        }}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <span
+            className="px-1.5 py-0.5 rounded text-xs font-bold shrink-0"
+            style={{ background: "rgba(242,138,42,0.2)", color: "#F28A2A" }}
+          >
+            {connecting.leg2.number}
+          </span>
+          <span className="text-white text-xs font-medium truncate">
+            {connecting.changeAt} → {connecting.leg2.destination}
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Bus size={11} style={{ color: "#A9B6C3" }} />
+          <span
+            className="text-xs font-semibold"
+            style={{ color: dep2 ? "#22c55e" : "#A9B6C3" }}
+          >
+            {dep2 ? `Departs ${dep2}` : "Last bus departed"}
+          </span>
+        </div>
+      </div>
+
+      {/* Track buttons */}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          data-ocid="home.track_leg1.button"
+          onClick={() => onTrack(connecting.leg1.id)}
+          className="flex-1 py-2 rounded-xl text-xs font-semibold transition-opacity hover:opacity-90 flex items-center justify-center gap-1"
+          style={{ background: "rgba(42,140,255,0.2)", color: "#2A8CFF" }}
+        >
+          <Navigation size={12} /> Leg 1
+        </button>
+        <ArrowRight
+          size={16}
+          style={{ color: "#A9B6C3" }}
+          className="self-center shrink-0"
+        />
+        <button
+          type="button"
+          data-ocid="home.track_leg2.button"
+          onClick={() => onTrack(connecting.leg2.id)}
+          className="flex-1 py-2 rounded-xl text-xs font-semibold transition-opacity hover:opacity-90 flex items-center justify-center gap-1"
+          style={{ background: "rgba(42,140,255,0.2)", color: "#2A8CFF" }}
+        >
+          <Navigation size={12} /> Leg 2
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 export function HomePage() {
   const navigate = useNavigate();
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [results, setResults] = useState<BusRoute[] | null>(null);
+  const [connectingResults, setConnectingResults] = useState<ConnectingRoute[]>(
+    [],
+  );
   const [searched, setSearched] = useState(false);
 
   const handleSwap = () => {
@@ -178,6 +320,11 @@ export function HomePage() {
     const found = searchRoutesByStops(from, to);
     setResults(found);
     setSearched(true);
+    if (found.length === 0) {
+      setConnectingResults(searchConnectingRoutes(from, to));
+    } else {
+      setConnectingResults([]);
+    }
   };
 
   const handleTrack = (routeId: string) => {
@@ -301,40 +448,86 @@ export function HomePage() {
               exit={{ opacity: 0 }}
               className="mb-6"
             >
-              <h2 className="text-base font-semibold text-white mb-3">
-                {results && results.length > 0
-                  ? `${results.length} route${results.length > 1 ? "s" : ""} found`
-                  : "No routes found"}
-              </h2>
               {results && results.length > 0 ? (
-                <div className="flex flex-col gap-3">
-                  {results.map((route) => (
-                    <RouteResultCard
-                      key={route.id}
-                      route={route}
-                      onTrack={handleTrack}
-                    />
-                  ))}
-                </div>
+                <>
+                  <h2 className="text-base font-semibold text-white mb-3">
+                    {results.length} route{results.length > 1 ? "s" : ""} found
+                  </h2>
+                  <div className="flex flex-col gap-3">
+                    {results.map((route) => (
+                      <RouteResultCard
+                        key={route.id}
+                        route={route}
+                        onTrack={handleTrack}
+                      />
+                    ))}
+                  </div>
+                </>
               ) : (
-                <div
-                  data-ocid="home.results.empty_state"
-                  className="rounded-2xl p-6 text-center"
-                  style={{ background: "#152635", border: "1px solid #24384A" }}
-                >
-                  <Bus
-                    size={32}
-                    style={{ color: "#24384A" }}
-                    className="mx-auto mb-3"
-                  />
-                  <p className="text-white font-semibold mb-1">
-                    No direct buses found
-                  </p>
-                  <p className="text-xs" style={{ color: "#A9B6C3" }}>
-                    Try searching nearby depots or check individual district
-                    timetables below.
-                  </p>
-                </div>
+                <>
+                  {/* No direct buses */}
+                  <div
+                    data-ocid="home.results.empty_state"
+                    className="rounded-2xl p-5 text-center mb-4"
+                    style={{
+                      background: "#152635",
+                      border: "1px solid #24384A",
+                    }}
+                  >
+                    <Bus
+                      size={28}
+                      style={{ color: "#24384A" }}
+                      className="mx-auto mb-2"
+                    />
+                    <p className="text-white font-semibold mb-1">
+                      No direct buses found
+                    </p>
+                    <p className="text-xs" style={{ color: "#A9B6C3" }}>
+                      No direct route between these stops — see connecting
+                      options below.
+                    </p>
+                  </div>
+
+                  {/* Connecting routes */}
+                  {connectingResults.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <RefreshCw size={15} style={{ color: "#2A8CFF" }} />
+                        <h2 className="text-base font-semibold text-white">
+                          Connecting Routes
+                          <span
+                            className="ml-2 text-xs font-normal px-2 py-0.5 rounded-full"
+                            style={{
+                              background: "rgba(42,140,255,0.15)",
+                              color: "#2A8CFF",
+                            }}
+                          >
+                            1 Change
+                          </span>
+                        </h2>
+                      </div>
+                      <div className="flex flex-col gap-3">
+                        {connectingResults.map((cr, i) => (
+                          <ConnectingRouteCard
+                            key={`${cr.leg1.id}-${cr.changeAt}-${cr.leg2.id}-${i}`}
+                            connecting={cr}
+                            onTrack={handleTrack}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {connectingResults.length === 0 && (
+                    <p
+                      className="text-xs text-center"
+                      style={{ color: "#A9B6C3" }}
+                    >
+                      No connecting routes found either. Try nearby stops or
+                      check district timetables.
+                    </p>
+                  )}
+                </>
               )}
             </motion.section>
           )}

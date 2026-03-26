@@ -1,8 +1,16 @@
 import { BottomNav } from "@/components/BottomNav";
 import { DEPOTS, getRoutesForDepot } from "@/data/depots";
-import { Bell, Clock, Plus, Trash2 } from "lucide-react";
+import {
+  AlertCircle,
+  Bell,
+  BellRing,
+  CheckCircle2,
+  Clock,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface Reminder {
@@ -31,6 +39,19 @@ function saveReminders(reminders: Reminder[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(reminders));
 }
 
+function getCurrentHHMM(): string {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
+async function requestNotificationPermission(): Promise<NotificationPermission> {
+  if (!("Notification" in window)) return "denied";
+  if (Notification.permission !== "default") return Notification.permission;
+  return Notification.requestPermission();
+}
+
 export function RemindersPage() {
   const [reminders, setReminders] = useState<Reminder[]>(loadReminders);
   const [depotId, setDepotId] = useState("");
@@ -38,6 +59,69 @@ export function RemindersPage() {
   const [stop, setStop] = useState("");
   const [time, setTime] = useState("");
   const [note, setNote] = useState("");
+  const [notifPerm, setNotifPerm] = useState<NotificationPermission>(
+    "Notification" in window ? Notification.permission : "denied",
+  );
+  const firedRef = useRef<Set<string>>(new Set());
+
+  // Set up notification checker
+  useEffect(() => {
+    if (!("Notification" in window)) return;
+
+    // Ask for permission on mount if not yet decided
+    if (Notification.permission === "default") {
+      Notification.requestPermission().then((perm) => {
+        setNotifPerm(perm);
+      });
+    }
+
+    const interval = setInterval(() => {
+      if (Notification.permission !== "granted") return;
+      const currentTime = getCurrentHHMM();
+      const stored = loadReminders();
+      for (const rem of stored) {
+        if (rem.time !== currentTime) continue;
+        const fireKey = `${rem.id}_${currentTime}`;
+        if (firedRef.current.has(fireKey)) continue;
+        firedRef.current.add(fireKey);
+
+        // Fire browser notification
+        try {
+          new Notification("🚌 Bus Reminder — Bus Trackr", {
+            body: `${rem.routeLabel} at ${rem.stop}${
+              rem.note ? ` · ${rem.note}` : ""
+            }`,
+            icon: "/favicon.ico",
+            tag: rem.id,
+          });
+        } catch {
+          // silently ignore if notification fails
+        }
+
+        // Also show in-app toast
+        toast(
+          <div className="flex flex-col gap-0.5">
+            <span className="font-semibold text-white text-sm">
+              🚌 Bus Reminder
+            </span>
+            <span className="text-xs" style={{ color: "#A9B6C3" }}>
+              {rem.routeLabel}
+            </span>
+            <span className="text-xs" style={{ color: "#A9B6C3" }}>
+              Stop: {rem.stop}
+              {rem.note ? ` · ${rem.note}` : ""}
+            </span>
+          </div>,
+          {
+            duration: 8000,
+            style: { background: "#152635", border: "1px solid #24384A" },
+          },
+        );
+      }
+    }, 30_000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const routes = depotId ? getRoutesForDepot(depotId) : [];
   const selectedRoute = routes.find((r) => r.id === routeId);
@@ -53,11 +137,15 @@ export function RemindersPage() {
     setStop("");
   };
 
-  const handleSetReminder = () => {
+  const handleSetReminder = async () => {
     if (!depotId || !routeId || !stop || !time) {
       toast.error("Please fill in all required fields");
       return;
     }
+
+    // Request permission if not yet granted
+    const perm = await requestNotificationPermission();
+    setNotifPerm(perm);
 
     const depot = DEPOTS.find((d) => d.id === depotId);
     const route = routes.find((r) => r.id === routeId);
@@ -79,14 +167,12 @@ export function RemindersPage() {
     setReminders(updated);
     saveReminders(updated);
 
-    if ("Notification" in window) {
-      Notification.requestPermission().then((perm) => {
-        if (perm === "granted") {
-          toast.success("Reminder set! You'll receive a notification.");
-        } else {
-          toast.success("Reminder saved!");
-        }
-      });
+    if (perm === "granted") {
+      toast.success("Reminder set! You'll receive a browser notification.");
+    } else if (perm === "denied") {
+      toast.success(
+        "Reminder saved! (Enable notifications in browser for alerts)",
+      );
     } else {
       toast.success("Reminder saved!");
     }
@@ -103,6 +189,15 @@ export function RemindersPage() {
     setReminders(updated);
     saveReminders(updated);
     toast.success("Reminder deleted");
+  };
+
+  const handleAllowNotifications = () => {
+    Notification.requestPermission().then((perm) => {
+      setNotifPerm(perm);
+      if (perm === "granted") {
+        toast.success("Notifications enabled!");
+      }
+    });
   };
 
   const inputStyle = {
@@ -141,6 +236,101 @@ export function RemindersPage() {
       </header>
 
       <main className="px-4 pt-4">
+        {/* Notification permission banner */}
+        <AnimatePresence>
+          {notifPerm === "default" && "Notification" in window && (
+            <motion.div
+              key="perm-default"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              data-ocid="reminders.notif_permission.panel"
+              className="rounded-2xl p-4 mb-4 flex items-start gap-3"
+              style={{
+                background: "rgba(42,140,255,0.1)",
+                border: "1px solid rgba(42,140,255,0.3)",
+              }}
+            >
+              <BellRing
+                size={18}
+                style={{ color: "#2A8CFF" }}
+                className="shrink-0 mt-0.5"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm font-semibold mb-0.5">
+                  Enable Notifications
+                </p>
+                <p className="text-xs mb-2" style={{ color: "#A9B6C3" }}>
+                  Allow notifications so Bus Trackr can alert you when your bus
+                  is about to depart.
+                </p>
+                <button
+                  type="button"
+                  data-ocid="reminders.allow_notifications.button"
+                  onClick={handleAllowNotifications}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90"
+                  style={{ background: "#2A8CFF", color: "white" }}
+                >
+                  Allow Notifications
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {notifPerm === "denied" && "Notification" in window && (
+            <motion.div
+              key="perm-denied"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              data-ocid="reminders.notif_denied.panel"
+              className="rounded-2xl p-4 mb-4 flex items-start gap-3"
+              style={{
+                background: "rgba(239,68,68,0.1)",
+                border: "1px solid rgba(239,68,68,0.3)",
+              }}
+            >
+              <AlertCircle
+                size={18}
+                style={{ color: "#ef4444" }}
+                className="shrink-0 mt-0.5"
+              />
+              <div className="min-w-0">
+                <p className="text-white text-sm font-semibold mb-0.5">
+                  Notifications Blocked
+                </p>
+                <p className="text-xs" style={{ color: "#A9B6C3" }}>
+                  Browser notifications are blocked. To receive alerts, enable
+                  notifications for this site in your browser settings.
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {notifPerm === "granted" && (
+            <motion.div
+              key="perm-granted"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="rounded-2xl px-4 py-2.5 mb-4 flex items-center gap-2"
+              style={{
+                background: "rgba(34,197,94,0.1)",
+                border: "1px solid rgba(34,197,94,0.25)",
+              }}
+            >
+              <CheckCircle2
+                size={15}
+                style={{ color: "#22c55e" }}
+                className="shrink-0"
+              />
+              <span className="text-xs" style={{ color: "#22c55e" }}>
+                Notifications enabled — you'll be alerted at your reminder time.
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div
           className="rounded-2xl p-4 mb-6"
           style={{ background: "#152635", border: "1px solid #24384A" }}

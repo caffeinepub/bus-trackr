@@ -28,15 +28,18 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           style={{ backgroundColor: "oklch(0.22 0.055 243)" }}
           data-ocid="splash.panel"
         >
-          {/* Logo */}
+          {/* Bus Icon */}
           <motion.div
             initial={{ scale: 0.7, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.5, ease: "backOut" }}
-            className="mb-6 flex h-24 w-24 items-center justify-center rounded-full"
-            style={{ backgroundColor: "oklch(0.72 0.185 145)" }}
+            className="mb-6 flex h-28 w-28 items-center justify-center rounded-2xl overflow-hidden shadow-2xl"
           >
-            <span className="text-4xl font-bold text-white">HR</span>
+            <img
+              src="/assets/generated/bus-trackr-icon.dim_512x512.png"
+              alt="Bus Trackr"
+              className="h-full w-full object-cover"
+            />
           </motion.div>
 
           {/* Title */}
@@ -44,9 +47,9 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.4 }}
-            className="mb-2 text-3xl font-bold text-white"
+            className="mb-2 text-4xl font-bold text-white tracking-wide"
           >
-            Haryana Roadways
+            Bus Trackr
           </motion.h1>
 
           {/* Subtitle */}
@@ -57,7 +60,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             className="mb-10 text-base"
             style={{ color: "oklch(0.72 0.01 240)" }}
           >
-            Real-time Bus Tracking
+            Haryana Roadways · Real-time Tracking
           </motion.p>
 
           {/* Loading bar container */}

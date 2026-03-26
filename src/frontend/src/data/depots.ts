@@ -19,10 +19,14 @@ import {
   SATNALI_ROUTES,
 } from "./narnaul";
 import { NUH_ROUTES } from "./nuh";
+import { PALWAL_ROUTES } from "./palwal";
 import { PANCHKULA_ROUTES } from "./panchkula";
 import { PANIPAT_ROUTES } from "./panipat";
+import { REWARI_ROUTES } from "./rewari";
 import { ROHTAK_ROUTES } from "./rohtak";
 import { SIRSA_ROUTES } from "./sirsa";
+import { SONIPAT_ROUTES } from "./sonipat";
+import { YAMUNANAGAR_ROUTES } from "./yamunanagar";
 
 export interface BusStop {
   name: string;
@@ -51,38 +55,11 @@ export interface Depot {
   district: string;
 }
 
-const DEP_HOURLY = [
-  "05:00",
-  "06:00",
-  "07:00",
-  "08:00",
-  "09:00",
-  "10:00",
-  "11:00",
-  "12:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-  "18:00",
-  "19:00",
-  "20:00",
-  "21:00",
-  "22:00",
-];
-const DEP_2H = [
-  "05:00",
-  "07:00",
-  "09:00",
-  "11:00",
-  "13:00",
-  "15:00",
-  "17:00",
-  "19:00",
-  "21:00",
-];
-const DEP_3H = ["05:00", "08:00", "11:00", "14:00", "17:00", "20:00"];
+export interface ConnectingRoute {
+  leg1: BusRoute;
+  changeAt: string;
+  leg2: BusRoute;
+}
 
 export const DEPOTS: Depot[] = [
   { id: "ambala", name: "Ambala", buses: 180, routes: 63, district: "Ambala" },
@@ -190,7 +167,7 @@ export const DEPOTS: Depot[] = [
     district: "Chandigarh",
   },
   { id: "nuh", name: "Nuh (Mewat)", buses: 45, routes: 40, district: "Nuh" },
-  { id: "palwal", name: "Palwal", buses: 27, routes: 7, district: "Palwal" },
+  { id: "palwal", name: "Palwal", buses: 120, routes: 250, district: "Palwal" },
   {
     id: "panchkula",
     name: "Panchkula",
@@ -205,7 +182,7 @@ export const DEPOTS: Depot[] = [
     routes: 303,
     district: "Panipat",
   },
-  { id: "rewari", name: "Rewari", buses: 33, routes: 8, district: "Rewari" },
+  { id: "rewari", name: "Rewari", buses: 120, routes: 400, district: "Rewari" },
   { id: "rohtak", name: "Rohtak", buses: 58, routes: 15, district: "Rohtak" },
   { id: "sirsa", name: "Sirsa", buses: 120, routes: 1060, district: "Sirsa" },
   {
@@ -245,161 +222,15 @@ export const DEPOT_ROUTES: Record<string, BusRoute[]> = {
   kanina: KANINA_ROUTES,
   satnali: SATNALI_ROUTES,
   nuh: NUH_ROUTES,
-  palwal: [
-    {
-      id: "plw-01",
-      number: "HR-141",
-      origin: "Palwal",
-      destination: "Delhi ISBT",
-      departures: DEP_HOURLY,
-      stops: ["Palwal", "Ballabhgarh", "Faridabad", "Delhi ISBT"],
-      durationMinutes: 90,
-    },
-    {
-      id: "plw-02",
-      number: "HR-142",
-      origin: "Palwal",
-      destination: "Agra",
-      departures: DEP_3H,
-      stops: ["Palwal", "Hodal", "Mathura", "Agra"],
-      durationMinutes: 180,
-    },
-    {
-      id: "plw-03",
-      number: "HR-143",
-      origin: "Palwal",
-      destination: "Nuh",
-      departures: DEP_HOURLY,
-      stops: ["Palwal", "Punhana", "Nuh"],
-      durationMinutes: 60,
-    },
-  ],
+  palwal: PALWAL_ROUTES,
   "chandigarh-isbt": CHANDIGARH_ROUTES,
   panchkula: PANCHKULA_ROUTES,
   panipat: PANIPAT_ROUTES,
-  rewari: [
-    {
-      id: "rwr-01",
-      number: "HR-171",
-      origin: "Rewari",
-      destination: "Delhi ISBT",
-      departures: DEP_2H,
-      stops: ["Rewari", "Dharuhera", "Gurugram", "Delhi ISBT"],
-      durationMinutes: 130,
-    },
-    {
-      id: "rwr-02",
-      number: "HR-172",
-      origin: "Rewari",
-      destination: "Narnaul",
-      departures: DEP_HOURLY,
-      stops: ["Rewari", "Palhawas", "Narnaul"],
-      durationMinutes: 60,
-    },
-    {
-      id: "rwr-03",
-      number: "HR-173",
-      origin: "Rewari",
-      destination: "Jhajjar",
-      departures: DEP_HOURLY,
-      stops: ["Rewari", "Kosli", "Jhajjar"],
-      durationMinutes: 70,
-    },
-    {
-      id: "rwr-04",
-      number: "HR-174",
-      origin: "Rewari",
-      destination: "Jaipur",
-      departures: DEP_3H,
-      stops: ["Rewari", "Narnaul", "Bhiwadi", "Jaipur"],
-      durationMinutes: 240,
-    },
-  ],
+  rewari: REWARI_ROUTES,
   rohtak: ROHTAK_ROUTES,
   sirsa: SIRSA_ROUTES,
-  sonipat: [
-    {
-      id: "snp-01",
-      number: "HR-201",
-      origin: "Sonipat",
-      destination: "Delhi ISBT",
-      departures: DEP_HOURLY,
-      stops: ["Sonipat", "Kundli", "Delhi ISBT"],
-      durationMinutes: 70,
-    },
-    {
-      id: "snp-02",
-      number: "HR-202",
-      origin: "Sonipat",
-      destination: "Chandigarh",
-      departures: DEP_3H,
-      stops: [
-        "Sonipat",
-        "Panipat",
-        "Karnal",
-        "Kurukshetra",
-        "Ambala",
-        "Chandigarh",
-      ],
-      durationMinutes: 240,
-    },
-    {
-      id: "snp-03",
-      number: "HR-203",
-      origin: "Sonipat",
-      destination: "Rohtak",
-      departures: DEP_HOURLY,
-      stops: ["Sonipat", "Gohana", "Rohtak"],
-      durationMinutes: 80,
-    },
-    {
-      id: "snp-04",
-      number: "HR-204",
-      origin: "Sonipat",
-      destination: "Jhajjar",
-      departures: DEP_HOURLY,
-      stops: ["Sonipat", "Jhajjar"],
-      durationMinutes: 60,
-    },
-  ],
-  yamunanagar: [
-    {
-      id: "ymn-01",
-      number: "HR-211",
-      origin: "Yamunanagar",
-      destination: "Chandigarh",
-      departures: DEP_2H,
-      stops: ["Yamunanagar", "Ambala", "Zirakpur", "Chandigarh"],
-      durationMinutes: 110,
-    },
-    {
-      id: "ymn-02",
-      number: "HR-212",
-      origin: "Yamunanagar",
-      destination: "Delhi ISBT",
-      departures: DEP_3H,
-      stops: ["Yamunanagar", "Ambala", "Karnal", "Panipat", "Delhi ISBT"],
-      durationMinutes: 250,
-    },
-    {
-      id: "ymn-03",
-      number: "HR-213",
-      origin: "Yamunanagar",
-      destination: "Panchkula",
-      departures: DEP_HOURLY,
-      stops: ["Yamunanagar", "Barwala", "Panchkula"],
-      durationMinutes: 70,
-    },
-    {
-      id: "ymn-04",
-      number: "HR-214",
-      origin: "Yamunanagar",
-      destination: "Kurukshetra",
-      departures: DEP_2H,
-      stops: ["Yamunanagar", "Jagadhri", "Ambala", "Kurukshetra"],
-      durationMinutes: 90,
-    },
-  ],
+  sonipat: SONIPAT_ROUTES,
+  yamunanagar: YAMUNANAGAR_ROUTES,
 };
 
 export function getDepotById(id: string): Depot | undefined {
@@ -464,6 +295,51 @@ export function searchRoutesByStops(from: string, to: string): BusRoute[] {
     const toIdx = stopNames.findIndex((s) => s.includes(t));
     return fromIdx !== -1 && toIdx !== -1 && fromIdx < toIdx;
   });
+}
+
+export function searchConnectingRoutes(
+  from: string,
+  to: string,
+): ConnectingRoute[] {
+  if (!from.trim() || !to.trim()) return [];
+  const f = from.trim().toLowerCase();
+  const t = to.trim().toLowerCase();
+  const allRoutes = getAllRoutes();
+
+  // Build stop->routes index
+  const stopToRoutes = new Map<string, BusRoute[]>();
+  for (const r of allRoutes) {
+    for (const s of r.stops) {
+      const key = s.toLowerCase();
+      if (!stopToRoutes.has(key)) stopToRoutes.set(key, []);
+      stopToRoutes.get(key)!.push(r);
+    }
+  }
+
+  const results: ConnectingRoute[] = [];
+  const seen = new Set<string>();
+
+  for (const r1 of allRoutes) {
+    const fromIdx = r1.stops.findIndex((s) => s.toLowerCase().includes(f));
+    if (fromIdx === -1) continue;
+    for (const changeStop of r1.stops.slice(fromIdx + 1)) {
+      const cKey = changeStop.toLowerCase();
+      for (const r2 of stopToRoutes.get(cKey) ?? []) {
+        if (r2.id === r1.id) continue;
+        const changeIdx = r2.stops.findIndex((s) => s.toLowerCase() === cKey);
+        const toIdx = r2.stops.findIndex((s) => s.toLowerCase().includes(t));
+        if (changeIdx !== -1 && toIdx !== -1 && changeIdx < toIdx) {
+          const key = `${r1.id}|${changeStop}|${r2.id}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            results.push({ leg1: r1, changeAt: changeStop, leg2: r2 });
+            if (results.length >= 4) return results;
+          }
+        }
+      }
+    }
+  }
+  return results;
 }
 
 export function getAllStopNames(): string[] {

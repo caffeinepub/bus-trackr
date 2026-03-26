@@ -2,7 +2,14 @@ import { BottomNav } from "@/components/BottomNav";
 import { getActiveRoutes, getAllRoutes, isRouteActive } from "@/data/depots";
 import type { BusRoute } from "@/data/depots";
 import { useSearch } from "@tanstack/react-router";
-import { Bus, Clock, MapPin, RefreshCw } from "lucide-react";
+import {
+  Bus,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  MapPin,
+  RefreshCw,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 function formatTime(date: Date) {
@@ -13,6 +20,14 @@ function formatTime(date: Date) {
   });
 }
 
+function formatMinutes(totalMin: number): string {
+  const h = Math.floor((totalMin % (24 * 60)) / 60);
+  const m = totalMin % 60;
+  const suffix = h < 12 ? "AM" : "PM";
+  const displayH = h % 12 === 0 ? 12 : h % 12;
+  return `${displayH}:${String(m).padStart(2, "0")} ${suffix}`;
+}
+
 function getNextDeparture(route: BusRoute): string | null {
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
@@ -21,6 +36,41 @@ function getNextDeparture(route: BusRoute): string | null {
     if (h * 60 + m > nowMin) return dep;
   }
   return null;
+}
+
+function getActiveDeparture(route: BusRoute): string | null {
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  for (const dep of route.departures) {
+    const [h, m] = dep.split(":").map(Number);
+    const depMin = h * 60 + m;
+    if (nowMin >= depMin && nowMin < depMin + route.durationMinutes) {
+      return dep;
+    }
+  }
+  return null;
+}
+
+/** Always returns a departure string — never null (unless departures array is empty) */
+function getEffectiveDeparture(route: BusRoute): string | null {
+  if (route.departures.length === 0) return null;
+  return (
+    getActiveDeparture(route) ??
+    getNextDeparture(route) ??
+    route.departures[route.departures.length - 1] ??
+    route.departures[0]
+  );
+}
+
+function getStopTimes(route: BusRoute, departureStr: string): string[] {
+  const [h, m] = departureStr.split(":").map(Number);
+  const startMin = h * 60 + m;
+  const n = route.stops.length;
+  return route.stops.map((_, i) => {
+    const fraction = n > 1 ? i / (n - 1) : 0;
+    const stopMin = Math.round(startMin + fraction * route.durationMinutes);
+    return formatMinutes(stopMin);
+  });
 }
 
 function getCurrentStopForRoute(route: BusRoute): {
@@ -50,20 +100,165 @@ function getCurrentStopForRoute(route: BusRoute): {
   return { stopIndex, progressPct };
 }
 
+function StopList({ route }: { route: BusRoute }) {
+  const active = isRouteActive(route);
+  const { stopIndex } = getCurrentStopForRoute(route);
+  const depStr = getEffectiveDeparture(route);
+  const stopTimes = depStr ? getStopTimes(route, depStr) : [];
+
+  return (
+    <div className="mt-3">
+      {route.stops.map((stop, i) => {
+        const isStart = i === 0;
+        const isEnd = i === route.stops.length - 1;
+        const isCurrent = active && i === stopIndex;
+        const isPassed = active && i < stopIndex;
+        const isUpcoming = !isPassed && !isCurrent;
+
+        let dotColor = "#24384A";
+        let dotBorder = "1.5px solid #3A5068";
+        let dotShadow = "none";
+        if (isStart && !active) dotColor = "#22c55e";
+        else if (isPassed) dotColor = "#F28A2A";
+        else if (isCurrent) {
+          dotColor = "#F28A2A";
+          dotBorder = "2px solid #F2F6FA";
+          dotShadow = "0 0 0 4px rgba(242,138,42,0.25)";
+        } else if (isEnd) dotColor = "#F28A2A";
+        else if (isStart) dotColor = "#22c55e";
+
+        let timeColor = "#A9B6C3";
+        if (isStart) timeColor = "#22c55e";
+        else if (isCurrent) timeColor = "#F28A2A";
+        else if (isEnd) timeColor = "#F28A2A";
+        else if (isPassed) timeColor = "#6B8FA6";
+        else if (isUpcoming) timeColor = "#2A8CFF";
+
+        return (
+          <div
+            key={stop}
+            className="flex items-start gap-3"
+            style={{ opacity: isPassed && !isStart ? 0.55 : 1 }}
+          >
+            {/* Timeline column */}
+            <div
+              className="flex flex-col items-center"
+              style={{ width: 16, minWidth: 16 }}
+            >
+              <div
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: "50%",
+                  background: dotColor,
+                  border: dotBorder,
+                  boxShadow: dotShadow,
+                  flexShrink: 0,
+                  marginTop: 2,
+                }}
+              />
+              {i < route.stops.length - 1 && (
+                <div
+                  style={{
+                    width: 2,
+                    flex: 1,
+                    minHeight: 22,
+                    background: isPassed ? "#F28A2A" : "#24384A",
+                    margin: "2px 0",
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Stop info */}
+            <div className="flex-1 pb-3 flex items-start justify-between">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span
+                  className="text-sm"
+                  style={{
+                    color: isPassed ? "#6B8FA6" : "#F2F6FA",
+                    fontWeight: isCurrent || isStart || isEnd ? 600 : 400,
+                  }}
+                >
+                  {stop}
+                </span>
+                {isStart && (
+                  <span
+                    className="text-xs px-1.5 py-0.5 rounded-full font-bold"
+                    style={{
+                      background: "rgba(34,197,94,0.15)",
+                      color: "#22c55e",
+                    }}
+                  >
+                    Start
+                  </span>
+                )}
+                {isEnd && (
+                  <span
+                    className="text-xs px-1.5 py-0.5 rounded-full font-bold"
+                    style={{
+                      background: "rgba(242,138,42,0.15)",
+                      color: "#F28A2A",
+                    }}
+                  >
+                    End
+                  </span>
+                )}
+                {isCurrent && (
+                  <span
+                    className="text-xs px-1.5 py-0.5 rounded-full font-bold"
+                    style={{
+                      background: "rgba(242,138,42,0.2)",
+                      color: "#F28A2A",
+                    }}
+                  >
+                    🚌 NOW
+                  </span>
+                )}
+              </div>
+              {stopTimes[i] && (
+                <span
+                  className="text-xs font-mono ml-2 shrink-0"
+                  style={{
+                    color: timeColor,
+                    fontWeight: isCurrent || isStart || isEnd ? 600 : 400,
+                  }}
+                >
+                  {stopTimes[i]}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function RouteTimeline({ route }: { route: BusRoute }) {
   const active = isRouteActive(route);
   const { stopIndex, progressPct } = getCurrentStopForRoute(route);
+  const [expanded, setExpanded] = useState(false);
   const width = 340;
   const padding = 20;
   const lineWidth = width - padding * 2;
   const stopSpacing = lineWidth / Math.max(route.stops.length - 1, 1);
+
+  const nextDep = getNextDeparture(route);
+  const activeDep = getActiveDeparture(route);
+
+  // Always compute stop times using effective departure
+  const effectiveDep = getEffectiveDeparture(route);
+  const stopTimes = effectiveDep ? getStopTimes(route, effectiveDep) : [];
+  const depTime = stopTimes[0] ?? null;
+  const arrTime = stopTimes[stopTimes.length - 1] ?? null;
 
   return (
     <div
       className="rounded-2xl p-4 mb-3"
       style={{ background: "#152635", border: "1px solid #24384A" }}
     >
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <div
             className="px-2 py-0.5 rounded-full text-xs font-bold"
@@ -93,6 +288,44 @@ function RouteTimeline({ route }: { route: BusRoute }) {
           )}
         </div>
       </div>
+
+      {/* Departure & Arrival time row — always visible */}
+      {(depTime || arrTime) && (
+        <div className="flex items-center gap-4 mb-3">
+          {depTime && (
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-bold" style={{ color: "#22c55e" }}>
+                🟢
+              </span>
+              <span className="text-xs" style={{ color: "#A9B6C3" }}>
+                Dep:
+              </span>
+              <span
+                className="text-xs font-semibold font-mono"
+                style={{ color: "#22c55e" }}
+              >
+                {depTime}
+              </span>
+            </div>
+          )}
+          {arrTime && depTime !== arrTime && (
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-bold" style={{ color: "#F28A2A" }}>
+                🟠
+              </span>
+              <span className="text-xs" style={{ color: "#A9B6C3" }}>
+                Arr:
+              </span>
+              <span
+                className="text-xs font-semibold font-mono"
+                style={{ color: "#F28A2A" }}
+              >
+                {arrTime}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <svg
@@ -182,27 +415,63 @@ function RouteTimeline({ route }: { route: BusRoute }) {
             ) : (
               <>
                 Next dep:{" "}
-                <span style={{ color: "#2A8CFF" }}>
-                  {getNextDeparture(route) ?? "—"}
-                </span>
+                <span style={{ color: "#2A8CFF" }}>{nextDep ?? "—"}</span>
               </>
             )}
           </span>
         </div>
-        {active && (
-          <div className="flex items-center gap-1">
-            <Clock size={12} style={{ color: "#A9B6C3" }} />
-            <span className="text-xs" style={{ color: "#A9B6C3" }}>
-              Next:{" "}
-              <span style={{ color: "#2A8CFF" }}>
-                {route.stops[
-                  Math.min(stopIndex + 1, route.stops.length - 1)
-                ]?.split(" ")[0] ?? "Last Stop"}
+        <div className="flex items-center gap-2">
+          {active && (
+            <div className="flex items-center gap-1">
+              <Clock size={12} style={{ color: "#A9B6C3" }} />
+              <span className="text-xs" style={{ color: "#A9B6C3" }}>
+                Next:{" "}
+                <span style={{ color: "#2A8CFF" }}>
+                  {route.stops[
+                    Math.min(stopIndex + 1, route.stops.length - 1)
+                  ]?.split(" ")[0] ?? "Last Stop"}
+                </span>
               </span>
-            </span>
-          </div>
-        )}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors"
+            style={{
+              background: expanded
+                ? "rgba(42,140,255,0.18)"
+                : "rgba(36,56,74,0.8)",
+              color: expanded ? "#2A8CFF" : "#A9B6C3",
+              border: expanded
+                ? "1px solid rgba(42,140,255,0.35)"
+                : "1px solid #24384A",
+            }}
+          >
+            {expanded ? (
+              <>
+                Hide stops <ChevronUp size={11} />
+              </>
+            ) : (
+              <>
+                Show times <ChevronDown size={11} />
+              </>
+            )}
+          </button>
+        </div>
       </div>
+
+      {expanded && (
+        <div>
+          <div className="my-3" style={{ height: 1, background: "#24384A" }} />
+          <p className="text-xs mb-2" style={{ color: "#A9B6C3" }}>
+            {active
+              ? `Estimated stop times · Trip started ${activeDep ?? ""}`
+              : `Scheduled times · Next departure: ${nextDep ?? effectiveDep ?? "—"}`}
+          </p>
+          <StopList route={route} />
+        </div>
+      )}
     </div>
   );
 }
