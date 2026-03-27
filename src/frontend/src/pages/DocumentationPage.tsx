@@ -1,4 +1,19 @@
 export function DocumentationPage() {
+  const codeStyle: React.CSSProperties = {
+    background: "#1e1e2e",
+    color: "#cdd6f4",
+    fontFamily: "'Courier New', Courier, monospace",
+    fontSize: "9pt",
+    padding: "12px 16px",
+    borderRadius: "6px",
+    display: "block",
+    marginBottom: "12px",
+    lineHeight: "1.5",
+    whiteSpace: "pre",
+    border: "1px solid #313244",
+    overflowX: "auto",
+  };
+
   return (
     <div className="documentation-page bg-white text-gray-900 min-h-screen">
       <style>{`
@@ -7,6 +22,7 @@ export function DocumentationPage() {
           body { margin: 0; }
           .documentation-page { padding: 0; }
           .page-break { page-break-before: always; }
+          pre { page-break-inside: avoid; }
         }
         .documentation-page {
           font-family: 'Times New Roman', Times, serif;
@@ -30,6 +46,7 @@ export function DocumentationPage() {
         .badge { display: inline-block; background: #1e3a5f; color: white; padding: 2px 8px; border-radius: 4px; font-size: 9pt; margin: 2px; }
         .highlight { background: #e8f0fb; border-left: 4px solid #1e3a5f; padding: 8px 14px; margin: 10px 0; }
         .section-num { color: #1e3a5f; font-weight: bold; margin-right: 6px; }
+        .code-label { font-family: monospace; font-size: 9pt; background: #313244; color: #a6e3a1; padding: 2px 8px; border-radius: 4px 4px 0 0; display: inline-block; margin-bottom: -1px; }
       `}</style>
 
       {/* Print button */}
@@ -189,6 +206,7 @@ export function DocumentationPage() {
         <li>District-wise Data Coverage</li>
         <li>UI/UX Design Approach</li>
         <li>Implementation Details</li>
+        <li>Source Code Listings</li>
         <li>Testing &amp; Validation</li>
         <li>Results &amp; Screenshots (Description)</li>
         <li>Limitations &amp; Future Scope</li>
@@ -439,7 +457,6 @@ export function DocumentationPage() {
         Home screen after a short delay, providing a polished app-like
         experience.
       </p>
-
       <h3>6.2 From/To Route Search (Home Page)</h3>
       <p>
         The home page presents a Google Maps-style search interface where users
@@ -455,7 +472,6 @@ export function DocumentationPage() {
         <li>Connecting routes (1 Change) when no direct service exists</li>
         <li>Next departure countdown</li>
       </ul>
-
       <h3>6.3 Live Tracking (Track Page)</h3>
       <p>
         The tracking page shows all buses currently running on a selected route.
@@ -472,7 +488,6 @@ export function DocumentationPage() {
         <li>Current position indicator ("NOW" badge at the current stop)</li>
         <li>Passed stops shown in grey, upcoming stops highlighted</li>
       </ul>
-
       <h3>6.4 Depot Timetables (Stops/Depots Page)</h3>
       <p>
         A searchable directory of all depots and sub-depots across Haryana.
@@ -486,7 +501,6 @@ export function DocumentationPage() {
         </li>
         <li>Filter by booth/counter for large multi-booth depots</li>
       </ul>
-
       <h3>6.5 Reminders</h3>
       <p>Users can set reminders for specific bus departures. The system:</p>
       <ul>
@@ -498,7 +512,6 @@ export function DocumentationPage() {
         </li>
         <li>Lists all active reminders with the ability to delete them</li>
       </ul>
-
       <h3>6.6 Progressive Web App (PWA)</h3>
       <p>
         Bus Trackr is fully installable as a PWA. Users can add it to their home
@@ -716,7 +729,7 @@ export function DocumentationPage() {
       <p>
         Given a route with N stops and a total scheduled duration of T minutes,
         each intermediate stop k is estimated as:{" "}
-        <em>departure_time + (k / N) × T</em>. This linear interpolation
+        <em>departure_time + (k / N) x T</em>. This linear interpolation
         provides reasonable estimates in the absence of per-stop timing data.
       </p>
       <h3>10.4 Connecting Routes</h3>
@@ -745,9 +758,343 @@ export function DocumentationPage() {
         integrated one-at-a-time into the respective district module.
       </p>
 
-      {/* 11. TESTING */}
+      {/* 11. SOURCE CODE LISTINGS */}
+      <div className="page-break" />
       <h2>
-        <span className="section-num">11.</span> Testing &amp; Validation
+        <span className="section-num">11.</span> Source Code Listings
+      </h2>
+      <p>
+        This section presents the key source code modules that form the core of
+        Bus Trackr. All code is written in TypeScript (React frontend) and
+        Motoko (ICP backend).
+      </p>
+
+      <h3>11.1 Data Model — BusRoute Interface</h3>
+      <div className="code-label">src/frontend/src/data/depots.ts</div>
+      <pre
+        style={codeStyle}
+      >{`// TypeScript interface defining the structure of every bus route
+export interface BusRoute {
+  id: string;           // Unique identifier, e.g. "SNP-001"
+  number?: string;      // Route number displayed on bus board
+  origin: string;       // Starting depot / stop name
+  destination: string;  // Final destination stop name
+  stops: string[];      // Ordered array of all stops
+  departures: string[]; // Array of departure times in "HH:MM" format
+  durationMinutes: number; // Total journey duration in minutes
+  operator?: string;    // "HR" | "Private" | "CTU"
+  serviceType?: string; // "Ordinary" | "Express" | "Volvo" | "HVAC"
+  district?: string;    // Haryana district name
+  depot?: string;       // Depot / sub-depot identifier
+}`}</pre>
+
+      <h3>11.2 Sample District Data — Fatehabad Depot</h3>
+      <div className="code-label">
+        src/frontend/src/data/fatehabad.ts (excerpt)
+      </div>
+      <pre style={codeStyle}>{`import type { BusRoute } from "./depots";
+
+export const FATEHABAD_ROUTES: BusRoute[] = [
+  {
+    id: "ftb-delhi-001",
+    number: "FTB-DEL",
+    origin: "Fatehabad",
+    destination: "Delhi",
+    stops: ["Fatehabad", "Tohana", "Narwana", "Rohtak", "Delhi"],
+    departures: ["05:30", "07:00", "09:00", "11:30", "14:00", "17:00"],
+    durationMinutes: 270,
+    operator: "HR",
+    serviceType: "Ordinary",
+    district: "Fatehabad",
+    depot: "Fatehabad Main",
+  },
+  {
+    id: "ftb-chandigarh-001",
+    number: "FTB-CHD",
+    origin: "Fatehabad",
+    destination: "Chandigarh",
+    stops: ["Fatehabad", "Hisar", "Hansi", "Rohtak", "Chandigarh"],
+    departures: ["05:00", "07:30", "10:00", "13:00", "16:30"],
+    durationMinutes: 300,
+    operator: "HR",
+    serviceType: "Ordinary",
+    district: "Fatehabad",
+    depot: "Fatehabad Main",
+  },
+  // ... 860+ more routes
+];`}</pre>
+
+      <h3>11.3 Route Aggregator — getAllRoutes()</h3>
+      <div className="code-label">src/frontend/src/data/depots.ts</div>
+      <pre style={codeStyle}>{`import { FATEHABAD_ROUTES } from "./fatehabad";
+import { HISAR_ROUTES } from "./hisar";
+import { KARNAL_ROUTES } from "./karnal";
+// ... (all 22 district imports)
+
+export const DEPOT_ROUTES: Record<string, BusRoute[]> = {
+  fatehabad: FATEHABAD_ROUTES,
+  hisar: HISAR_ROUTES,
+  karnal: KARNAL_ROUTES,
+  // ... all 22 districts
+};
+
+// Returns all routes from all 22 districts as a flat array
+export function getAllRoutes(): BusRoute[] {
+  return Object.values(DEPOT_ROUTES).flat();
+}`}</pre>
+
+      <h3>11.4 Route Search — searchRoutesByStops()</h3>
+      <div className="code-label">src/frontend/src/data/depots.ts</div>
+      <pre style={codeStyle}>{`/**
+ * Search all routes where 'from' stop appears before 'to' stop.
+ * Uses case-insensitive partial matching for user-friendly search.
+ */
+export function searchRoutesByStops(
+  from: string,
+  to: string
+): BusRoute[] {
+  if (!from.trim() || !to.trim()) return [];
+
+  const f = from.trim().toLowerCase();
+  const t = to.trim().toLowerCase();
+
+  return getAllRoutes().filter((route) => {
+    const stopNames = route.stops.map((s) => s.toLowerCase());
+    const fromIdx = stopNames.findIndex((s) => s.includes(f));
+    const toIdx   = stopNames.findIndex((s) => s.includes(t));
+
+    // Both stops must exist AND From must come before To
+    return fromIdx !== -1 && toIdx !== -1 && fromIdx < toIdx;
+  });
+}`}</pre>
+
+      <h3>11.5 Connecting Routes — searchConnectingRoutes()</h3>
+      <div className="code-label">src/frontend/src/data/depots.ts</div>
+      <pre style={codeStyle}>{`/**
+ * Find 1-change connecting routes when no direct service exists.
+ * Builds an inverted index (stop -> routes) for efficient lookup.
+ */
+export function searchConnectingRoutes(
+  from: string,
+  to: string
+): ConnectingRoute[] {
+  if (!from.trim() || !to.trim()) return [];
+
+  const f = from.trim().toLowerCase();
+  const t = to.trim().toLowerCase();
+  const allRoutes = getAllRoutes();
+
+  // Step 1: Build stop -> routes index
+  const stopToRoutes = new Map<string, BusRoute[]>();
+  for (const route of allRoutes) {
+    for (const stop of route.stops) {
+      const key = stop.toLowerCase();
+      if (!stopToRoutes.has(key)) stopToRoutes.set(key, []);
+      stopToRoutes.get(key)!.push(route);
+    }
+  }
+
+  const results: ConnectingRoute[] = [];
+  const seen = new Set<string>();
+
+  for (const leg1 of allRoutes) {
+    const fromIdx = leg1.stops.findIndex(
+      (s) => s.toLowerCase().includes(f)
+    );
+    if (fromIdx === -1) continue;
+
+    for (const changeStop of leg1.stops.slice(fromIdx + 1)) {
+      const cKey = changeStop.toLowerCase();
+
+      for (const leg2 of stopToRoutes.get(cKey) ?? []) {
+        if (leg2.id === leg1.id) continue;
+
+        const changeIdx = leg2.stops.findIndex(
+          (s) => s.toLowerCase() === cKey
+        );
+        const toIdx = leg2.stops.findIndex(
+          (s) => s.toLowerCase().includes(t)
+        );
+
+        if (changeIdx !== -1 && toIdx !== -1 && changeIdx < toIdx) {
+          const key = leg1.id + "|" + changeStop + "|" + leg2.id;
+          if (!seen.has(key)) {
+            seen.add(key);
+            results.push({ leg1, changeAt: changeStop, leg2 });
+            if (results.length >= 4) return results;
+          }
+        }
+      }
+    }
+  }
+  return results;
+}`}</pre>
+
+      <h3>11.6 Stop-wise Time Estimation — getStopTimes()</h3>
+      <div className="code-label">src/frontend/src/pages/TrackPage.tsx</div>
+      <pre style={codeStyle}>{`/**
+ * Calculate estimated arrival time at every stop for a given departure.
+ * Uses linear interpolation based on total journey duration.
+ *
+ * Formula: stopTime = departure + (stopIndex / totalStops) * duration
+ */
+function getStopTimes(
+  route: BusRoute,
+  departureStr: string
+): string[] {
+  const [h, m] = departureStr.split(":").map(Number);
+  const startMin = h * 60 + m;
+  const n = route.stops.length;
+
+  return route.stops.map((_, index) => {
+    const fraction = n > 1 ? index / (n - 1) : 0;
+    const stopMin = Math.round(
+      startMin + fraction * route.durationMinutes
+    );
+    return formatMinutes(stopMin);
+  });
+}
+
+// Helper: convert minutes since midnight to "HH:MM" string
+function formatMinutes(totalMinutes: number): string {
+  const normalized = ((totalMinutes % 1440) + 1440) % 1440;
+  const hh = Math.floor(normalized / 60).toString().padStart(2, "0");
+  const mm = (normalized % 60).toString().padStart(2, "0");
+  return hh + ":" + mm;
+}`}</pre>
+
+      <h3>11.7 Live Status Detection — getCurrentStopForRoute()</h3>
+      <div className="code-label">src/frontend/src/pages/TrackPage.tsx</div>
+      <pre style={codeStyle}>{`/**
+ * Determine if a bus is currently active and find its current stop.
+ * A bus is "Live" if: departure <= currentTime < departure + duration
+ */
+function getCurrentStopForRoute(
+  route: BusRoute
+): { stopIndex: number; progressPct: number } | null {
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  for (const dep of route.departures) {
+    const [h, m] = dep.split(":").map(Number);
+    const depMin = h * 60 + m;
+    const arrMin = depMin + route.durationMinutes;
+
+    if (nowMin >= depMin && nowMin < arrMin) {
+      const elapsed = nowMin - depMin;
+      const progressPct = elapsed / route.durationMinutes;
+      const stopIndex = Math.min(
+        Math.floor(progressPct * (route.stops.length - 1)),
+        route.stops.length - 1
+      );
+      return { stopIndex, progressPct };
+    }
+  }
+  return null; // No active trip right now
+}`}</pre>
+
+      <h3>11.8 Reminder System</h3>
+      <div className="code-label">
+        src/frontend/src/pages/RemindersPage.tsx (excerpt)
+      </div>
+      <pre style={codeStyle}>{`// Request notification permission from the user
+async function requestNotificationPermission(): Promise<boolean> {
+  if (!("Notification" in window)) return false;
+  if (Notification.permission === "granted") return true;
+  const result = await Notification.requestPermission();
+  return result === "granted";
+}
+
+// Background polling: check every 30 seconds if any reminder is due
+useEffect(() => {
+  const interval = setInterval(() => {
+    const now = new Date();
+    const hh = now.getHours().toString().padStart(2, "0");
+    const mm = now.getMinutes().toString().padStart(2, "0");
+    const currentHHMM = hh + ":" + mm;
+
+    const reminders = loadReminders();
+    for (const reminder of reminders) {
+      if (reminder.time === currentHHMM && !reminder.fired) {
+        new Notification("Bus Trackr Reminder", {
+          body: "Bus to " + reminder.destination + " departs at " + reminder.time,
+          icon: "/icons/bus-icon-192.png",
+        });
+        reminder.fired = true;
+      }
+    }
+    localStorage.setItem("busTrackrReminders", JSON.stringify(reminders));
+  }, 30_000);
+
+  return () => clearInterval(interval);
+}, []);`}</pre>
+
+      <h3>11.9 PWA Manifest</h3>
+      <div className="code-label">src/frontend/public/manifest.json</div>
+      <pre style={codeStyle}>{`{
+  "name": "Bus Trackr",
+  "short_name": "Bus Trackr",
+  "description": "Real-time Haryana Roadways bus tracking and timetables",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ea580c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/bus-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/bus-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}`}</pre>
+
+      <h3>11.10 Motoko Backend Canister</h3>
+      <div className="code-label">src/backend/main.mo</div>
+      <pre style={codeStyle}>{`import Text "mo:base/Text";
+
+actor BusTrackr {
+
+  stable var version : Nat = 35;
+
+  public query func getVersion() : async Nat {
+    version
+  };
+
+  public query func ping() : async Text {
+    "Bus Trackr canister is running. Version: " # debug_show(version)
+  };
+
+  public query func getAppInfo() : async {
+    name: Text;
+    description: Text;
+    districts: Nat;
+    totalServices: Nat;
+  } {
+    {
+      name = "Bus Trackr";
+      description = "Haryana Roadways Real-Time Timetable System";
+      districts = 22;
+      totalServices = 15000;
+    }
+  };
+
+  system func preupgrade() {
+    version += 1;
+  };
+}`}</pre>
+
+      {/* 12. TESTING */}
+      <div className="page-break" />
+      <h2>
+        <span className="section-num">12.</span> Testing &amp; Validation
       </h2>
       <table>
         <thead>
@@ -811,10 +1158,10 @@ export function DocumentationPage() {
         </tbody>
       </table>
 
-      {/* 12. RESULTS */}
+      {/* 13. RESULTS */}
       <div className="page-break" />
       <h2>
-        <span className="section-num">12.</span> Results
+        <span className="section-num">13.</span> Results
       </h2>
       <p>
         The completed Bus Trackr application achieves the following measurable
@@ -855,13 +1202,13 @@ export function DocumentationPage() {
         </li>
       </ul>
       <div className="highlight">
-        The app was deployed on the Internet Computer blockchain at version 34,
+        The app was deployed on the Internet Computer blockchain at version 35,
         with all features validated and all 22 district datasets confirmed live.
       </div>
 
-      {/* 13. LIMITATIONS */}
+      {/* 14. LIMITATIONS */}
       <h2>
-        <span className="section-num">13.</span> Limitations &amp; Future Scope
+        <span className="section-num">14.</span> Limitations &amp; Future Scope
       </h2>
       <h3>Current Limitations</h3>
       <ul>
@@ -915,9 +1262,9 @@ export function DocumentationPage() {
         </li>
       </ul>
 
-      {/* 14. CONCLUSION */}
+      {/* 15. CONCLUSION */}
       <h2>
-        <span className="section-num">14.</span> Conclusion
+        <span className="section-num">15.</span> Conclusion
       </h2>
       <p>
         Bus Trackr successfully demonstrates that a world-class public transit
@@ -942,10 +1289,10 @@ export function DocumentationPage() {
         to the public transit information gap in Haryana.
       </p>
 
-      {/* 15. REFERENCES */}
+      {/* 16. REFERENCES */}
       <div className="page-break" />
       <h2>
-        <span className="section-num">15.</span> References
+        <span className="section-num">16.</span> References
       </h2>
       <ol>
         <li>
