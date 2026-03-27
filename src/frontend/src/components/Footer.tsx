@@ -117,7 +117,7 @@ export function Footer() {
           </span>
           <span className="flex items-center gap-1">
             <Bus className="h-3.5 w-3.5" />
-            Made in India 🇮🇳
+            Made in India 🇮🇳 · Dev: KHUS BISHNOI
           </span>
         </div>
       </div>

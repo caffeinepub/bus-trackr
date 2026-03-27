@@ -101,7 +101,9 @@ export function DocumentationPage() {
               >
                 Submitted By:
               </td>
-              <td style={{ border: "none", textAlign: "left" }}>[Your Name]</td>
+              <td style={{ border: "none", textAlign: "left" }}>
+                KHUS BISHNOI
+              </td>
             </tr>
             <tr>
               <td
