@@ -209,6 +209,7 @@ export function DocumentationPage() {
         <li>UI/UX Design Approach</li>
         <li>Implementation Details</li>
         <li>Source Code Listings</li>
+        <li>Complete Source Code Listings</li>
         <li>Testing &amp; Validation</li>
         <li>Results &amp; Screenshots (Description)</li>
         <li>Limitations &amp; Future Scope</li>
@@ -1093,10 +1094,1329 @@ actor BusTrackr {
   };
 }`}</pre>
 
-      {/* 12. TESTING */}
+      {/* 12. COMPLETE SOURCE CODE LISTINGS */}
       <div className="page-break" />
       <h2>
-        <span className="section-num">12.</span> Testing &amp; Validation
+        <span className="section-num">12.</span> Complete Source Code Listings
+      </h2>
+      <p>
+        This section contains the complete, verbatim source code of every main
+        project file. All files are TypeScript/TSX (React frontend) except
+        Section 12.7 which is Motoko (ICP backend).
+      </p>
+
+      <h3>12.1 src/frontend/src/App.tsx</h3>
+      <div className="code-label">src/frontend/src/App.tsx</div>
+      <pre style={codeStyle}>{`import { Toaster } from "@/components/ui/sonner";
+import { DepotPage } from "@/pages/DepotPage";
+import { DocumentationPage } from "@/pages/DocumentationPage";
+import { HomePage } from "@/pages/HomePage";
+import { RemindersPage } from "@/pages/RemindersPage";
+import { SplashPage } from "@/pages/SplashPage";
+import { StopsPage } from "@/pages/StopsPage";
+import { TrackPage } from "@/pages/TrackPage";
+import {
+  RouterProvider,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  redirect,
+} from "@tanstack/react-router";
+
+const rootRoute = createRootRoute();
+
+const splashRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/",
+  component: SplashPage,
+});
+
+const homeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/home",
+  component: HomePage,
+});
+
+const stopsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/stops",
+  component: StopsPage,
+});
+
+const depotRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/depot/$id",
+  component: DepotPage,
+});
+
+const trackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/track",
+  component: TrackPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    routeId: typeof search.routeId === "string" ? search.routeId : undefined,
+  }),
+});
+
+const remindersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/reminders",
+  component: RemindersPage,
+});
+
+const docsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/docs",
+  component: DocumentationPage,
+});
+
+const catchAllRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "*",
+  beforeLoad: () => {
+    throw redirect({ to: "/" });
+  },
+  component: () => null,
+});
+
+const routeTree = rootRoute.addChildren([
+  splashRoute,
+  homeRoute,
+  stopsRoute,
+  depotRoute,
+  trackRoute,
+  remindersRoute,
+  docsRoute,
+  catchAllRoute,
+]);
+
+const router = createRouter({ routeTree });
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof router;
+  }
+}
+
+export default function App() {
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster />
+    </>
+  );
+}
+`}</pre>
+
+      <h3>12.2 src/frontend/src/pages/SplashPage.tsx</h3>
+      <div className="code-label">src/frontend/src/pages/SplashPage.tsx</div>
+      <pre
+        style={codeStyle}
+      >{`import { useNavigate } from "@tanstack/react-router";
+import { Bus } from "lucide-react";
+import { useEffect, useState } from "react";
+
+export function SplashPage() {
+  const navigate = useNavigate();
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setVisible(false);
+      setTimeout(() => navigate({ to: "/home" }), 400);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [navigate]);
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "linear-gradient(180deg, #0B1520 0%, #0F2433 100%)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        opacity: visible ? 1 : 0,
+        transition: "opacity 0.4s ease",
+        zIndex: 9999,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "1.5rem",
+        }}
+      >
+        <div
+          className="bus-animate"
+          style={{
+            width: 96,
+            height: 96,
+            borderRadius: 24,
+            background: "linear-gradient(135deg, #F28A2A, #d4741f)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 8px 32px rgba(242,138,42,0.35)",
+          }}
+        >
+          <Bus size={48} color="white" strokeWidth={2} />
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <h1
+            style={{
+              fontSize: "2.5rem",
+              fontWeight: 700,
+              color: "white",
+              letterSpacing: "-0.02em",
+              margin: 0,
+            }}
+          >
+            Bus Trackr
+          </h1>
+          <p style={{ fontSize: "0.875rem", marginTop: 8, color: "#A9B6C3" }}>
+            Haryana Roadways — Track. Plan. Ride.
+          </p>
+        </div>
+        <div
+          style={{
+            width: 256,
+            height: 4,
+            borderRadius: 9999,
+            overflow: "hidden",
+            background: "#24384A",
+          }}
+        >
+          <div
+            className="splash-bar"
+            style={{
+              height: "100%",
+              borderRadius: 9999,
+              background: "#F28A2A",
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+`}</pre>
+
+      <h3>12.3 src/frontend/src/components/BottomNav.tsx</h3>
+      <div className="code-label">
+        src/frontend/src/components/BottomNav.tsx
+      </div>
+      <pre
+        style={codeStyle}
+      >{`import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { Bell, Bus, Clock, Home, MapPin } from "lucide-react";
+
+const NAV_ITEMS = [
+  { label: "Home", icon: Home, path: "/home" },
+  { label: "Track Bus", icon: Bus, path: "/track" },
+  { label: "Depots", icon: MapPin, path: "/stops" },
+  { label: "Timetable", icon: Clock, path: "/depot/ambala" },
+  { label: "Reminders", icon: Bell, path: "/reminders" },
+];
+
+export function BottomNav() {
+  const navigate = useNavigate();
+  const { location } = useRouterState();
+  const pathname = location.pathname;
+
+  const handleNav = (path: string) => {
+    if (path === "/track") {
+      navigate({ to: "/track", search: { routeId: undefined } });
+    } else if (path === "/depot/ambala") {
+      navigate({ to: "/depot/$id", params: { id: "ambala" } });
+    } else {
+      navigate({ to: path as "/home" | "/stops" | "/reminders" });
+    }
+  };
+
+  return (
+    <nav
+      data-ocid="bottom_nav"
+      style={{ background: "#0F2433", borderTop: "1px solid #24384A" }}
+      className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2"
+    >
+      {NAV_ITEMS.map((item) => {
+        const isActive =
+          item.path === "/depot/ambala"
+            ? pathname.startsWith("/depot")
+            : pathname === item.path;
+        const Icon = item.icon;
+        return (
+          <button
+            type="button"
+            key={item.path}
+            data-ocid={\`nav.\${item.label.toLowerCase().replace(" ", "_")}.link\`}
+            onClick={() => handleNav(item.path)}
+            className="flex flex-col items-center gap-0.5 py-2 px-3 min-w-[56px] transition-colors"
+          >
+            <Icon
+              size={22}
+              style={{ color: isActive ? "#F28A2A" : "#A9B6C3" }}
+            />
+            <span
+              className="text-[10px] font-medium"
+              style={{ color: isActive ? "#F28A2A" : "#A9B6C3" }}
+            >
+              {item.label}
+            </span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+`}</pre>
+
+      <h3>12.4 src/frontend/src/pages/StopsPage.tsx</h3>
+      <div className="code-label">src/frontend/src/pages/StopsPage.tsx</div>
+      <pre
+        style={codeStyle}
+      >{`import { BottomNav } from "@/components/BottomNav";
+import { DEPOTS } from "@/data/depots";
+import { useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, Bus, MapPin, Route, Search, X } from "lucide-react";
+import { motion } from "motion/react";
+import { useMemo, useState } from "react";
+
+export function StopsPage() {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return DEPOTS;
+    const q = query.trim().toLowerCase();
+    return DEPOTS.filter(
+      (d) =>
+        d.name.toLowerCase().includes(q) ||
+        d.district.toLowerCase().includes(q),
+    );
+  }, [query]);
+
+  return (
+    <div
+      className="min-h-screen pb-24"
+      style={{
+        background: "linear-gradient(180deg, #0B1520 0%, #0F2433 100%)",
+      }}
+    >
+      <header
+        className="flex items-center gap-3 px-4 py-4 sticky top-0 z-40"
+        style={{
+          background: "rgba(11,21,32,0.95)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid #24384A",
+        }}
+      >
+        <button
+          type="button"
+          data-ocid="stops.back.button"
+          onClick={() => navigate({ to: "/home" })}
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: "#152635" }}
+        >
+          <ArrowLeft size={18} color="white" />
+        </button>
+        <div className="min-w-0">
+          <h1 className="font-bold text-white text-lg leading-tight">
+            All Depots
+          </h1>
+          <p className="text-xs" style={{ color: "#A9B6C3" }}>
+            {query.trim()
+              ? \`\${filtered.length} of \${DEPOTS.length} depots\`
+              : \`\${DEPOTS.length} depots across 22 districts\`}
+          </p>
+        </div>
+      </header>
+
+      <main className="px-4 pt-4">
+        {/* Search bar */}
+        <div
+          className="flex items-center gap-3 rounded-2xl px-4 py-3 mb-4"
+          style={{ background: "#152635", border: "1px solid #24384A" }}
+        >
+          <Search size={16} style={{ color: "#A9B6C3" }} className="shrink-0" />
+          <input
+            data-ocid="stops.search_input"
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search depot or district..."
+            className="flex-1 bg-transparent outline-none text-white placeholder:text-[#5A7A90] text-sm"
+          />
+          {query && (
+            <button
+              type="button"
+              data-ocid="stops.search_clear.button"
+              onClick={() => setQuery("")}
+              className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-opacity hover:opacity-80"
+              style={{ background: "#24384A" }}
+            >
+              <X size={12} color="white" />
+            </button>
+          )}
+        </div>
+
+        {filtered.length === 0 ? (
+          <motion.div
+            data-ocid="stops.empty_state"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="rounded-2xl p-8 text-center mt-4"
+            style={{ background: "#152635", border: "1px solid #24384A" }}
+          >
+            <MapPin
+              size={32}
+              style={{ color: "#24384A" }}
+              className="mx-auto mb-3"
+            />
+            <p className="text-white font-semibold">No depots found</p>
+            <p className="text-xs mt-1" style={{ color: "#A9B6C3" }}>
+              Try searching by district name
+            </p>
+          </motion.div>
+        ) : (
+          <div data-ocid="stops.list" className="grid grid-cols-2 gap-3">
+            {filtered.map((depot, i) => (
+              <motion.button
+                type="button"
+                key={depot.id}
+                data-ocid={\`stops.item.\${i + 1}\`}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.03 }}
+                onClick={() =>
+                  navigate({ to: "/depot/$id", params: { id: depot.id } })
+                }
+                className="rounded-2xl p-4 text-left transition-all hover:scale-[1.02] active:scale-[0.98]"
+                style={{ background: "#152635", border: "1px solid #24384A" }}
+              >
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
+                  style={{ background: "rgba(242,138,42,0.15)" }}
+                >
+                  <MapPin size={18} style={{ color: "#F28A2A" }} />
+                </div>
+                <p className="font-semibold text-white text-sm leading-tight mb-0.5">
+                  {depot.name}
+                </p>
+                <p className="text-xs mb-2" style={{ color: "#5A7A90" }}>
+                  {depot.district}
+                </p>
+                <div className="flex items-center gap-1 mb-1">
+                  <Bus size={12} style={{ color: "#A9B6C3" }} />
+                  <span className="text-xs" style={{ color: "#A9B6C3" }}>
+                    {depot.buses} Buses
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Route size={12} style={{ color: "#2A8CFF" }} />
+                  <span className="text-xs" style={{ color: "#2A8CFF" }}>
+                    {depot.routes} Routes
+                  </span>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        )}
+      </main>
+
+      <BottomNav />
+    </div>
+  );
+}
+`}</pre>
+
+      <h3>12.5 src/frontend/src/pages/RemindersPage.tsx</h3>
+      <div className="code-label">src/frontend/src/pages/RemindersPage.tsx</div>
+      <pre
+        style={codeStyle}
+      >{`import { BottomNav } from "@/components/BottomNav";
+import { DEPOTS, getRoutesForDepot } from "@/data/depots";
+import {
+  AlertCircle,
+  Bell,
+  BellRing,
+  CheckCircle2,
+  Clock,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+
+interface Reminder {
+  id: string;
+  depotId: string;
+  depotName: string;
+  routeId: string;
+  routeLabel: string;
+  stop: string;
+  time: string;
+  note: string;
+  createdAt: number;
+}
+
+const STORAGE_KEY = "bus_trackr_reminders";
+
+function loadReminders(): Reminder[] {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveReminders(reminders: Reminder[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(reminders));
+}
+
+function getCurrentHHMM(): string {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  return \`\${hh}:\${mm}\`;
+}
+
+async function requestNotificationPermission(): Promise<NotificationPermission> {
+  if (!("Notification" in window)) return "denied";
+  if (Notification.permission !== "default") return Notification.permission;
+  return Notification.requestPermission();
+}
+
+export function RemindersPage() {
+  const [reminders, setReminders] = useState<Reminder[]>(loadReminders);
+  const [depotId, setDepotId] = useState("");
+  const [routeId, setRouteId] = useState("");
+  const [stop, setStop] = useState("");
+  const [time, setTime] = useState("");
+  const [note, setNote] = useState("");
+  const [notifPerm, setNotifPerm] = useState<NotificationPermission>(
+    "Notification" in window ? Notification.permission : "denied",
+  );
+  const firedRef = useRef<Set<string>>(new Set());
+
+  // Set up notification checker
+  useEffect(() => {
+    if (!("Notification" in window)) return;
+
+    // Ask for permission on mount if not yet decided
+    if (Notification.permission === "default") {
+      Notification.requestPermission().then((perm) => {
+        setNotifPerm(perm);
+      });
+    }
+
+    const interval = setInterval(() => {
+      if (Notification.permission !== "granted") return;
+      const currentTime = getCurrentHHMM();
+      const stored = loadReminders();
+      for (const rem of stored) {
+        if (rem.time !== currentTime) continue;
+        const fireKey = \`\${rem.id}_\${currentTime}\`;
+        if (firedRef.current.has(fireKey)) continue;
+        firedRef.current.add(fireKey);
+
+        // Fire browser notification
+        try {
+          new Notification("🚌 Bus Reminder — Bus Trackr", {
+            body: \`\${rem.routeLabel} at \${rem.stop}\${
+              rem.note ? \` · \${rem.note}\` : ""
+            }\`,
+            icon: "/favicon.ico",
+            tag: rem.id,
+          });
+        } catch {
+          // silently ignore if notification fails
+        }
+
+        // Also show in-app toast
+        toast(
+          <div className="flex flex-col gap-0.5">
+            <span className="font-semibold text-white text-sm">
+              🚌 Bus Reminder
+            </span>
+            <span className="text-xs" style={{ color: "#A9B6C3" }}>
+              {rem.routeLabel}
+            </span>
+            <span className="text-xs" style={{ color: "#A9B6C3" }}>
+              Stop: {rem.stop}
+              {rem.note ? \` · \${rem.note}\` : ""}
+            </span>
+          </div>,
+          {
+            duration: 8000,
+            style: { background: "#152635", border: "1px solid #24384A" },
+          },
+        );
+      }
+    }, 30_000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const routes = depotId ? getRoutesForDepot(depotId) : [];
+  const selectedRoute = routes.find((r) => r.id === routeId);
+
+  const handleDepotChange = (val: string) => {
+    setDepotId(val);
+    setRouteId("");
+    setStop("");
+  };
+
+  const handleRouteChange = (val: string) => {
+    setRouteId(val);
+    setStop("");
+  };
+
+  const handleSetReminder = async () => {
+    if (!depotId || !routeId || !stop || !time) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Request permission if not yet granted
+    const perm = await requestNotificationPermission();
+    setNotifPerm(perm);
+
+    const depot = DEPOTS.find((d) => d.id === depotId);
+    const route = routes.find((r) => r.id === routeId);
+    if (!depot || !route) return;
+
+    const newReminder: Reminder = {
+      id: \`\${Date.now()}\`,
+      depotId,
+      depotName: depot.name,
+      routeId,
+      routeLabel: \`\${route.number}: \${route.origin} → \${route.destination}\`,
+      stop,
+      time,
+      note,
+      createdAt: Date.now(),
+    };
+
+    const updated = [...reminders, newReminder];
+    setReminders(updated);
+    saveReminders(updated);
+
+    if (perm === "granted") {
+      toast.success("Reminder set! You'll receive a browser notification.");
+    } else if (perm === "denied") {
+      toast.success(
+        "Reminder saved! (Enable notifications in browser for alerts)",
+      );
+    } else {
+      toast.success("Reminder saved!");
+    }
+
+    setDepotId("");
+    setRouteId("");
+    setStop("");
+    setTime("");
+    setNote("");
+  };
+
+  const handleDelete = (id: string) => {
+    const updated = reminders.filter((r) => r.id !== id);
+    setReminders(updated);
+    saveReminders(updated);
+    toast.success("Reminder deleted");
+  };
+
+  const handleAllowNotifications = () => {
+    Notification.requestPermission().then((perm) => {
+      setNotifPerm(perm);
+      if (perm === "granted") {
+        toast.success("Notifications enabled!");
+      }
+    });
+  };
+
+  const inputStyle = {
+    background: "#0F2433",
+    border: "1px solid #24384A",
+    color: "#F2F6FA",
+    borderRadius: 12,
+    padding: "10px 14px",
+    fontSize: 14,
+    outline: "none",
+    width: "100%",
+  } as const;
+
+  return (
+    <div
+      className="min-h-screen pb-24"
+      style={{
+        background: "linear-gradient(180deg, #0B1520 0%, #0F2433 100%)",
+      }}
+    >
+      <header
+        className="flex items-center gap-3 px-4 py-4 sticky top-0 z-40"
+        style={{
+          background: "rgba(11,21,32,0.95)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid #24384A",
+        }}
+      >
+        <Bell size={22} style={{ color: "#F28A2A" }} />
+        <div>
+          <h1 className="font-bold text-white text-lg">Reminders</h1>
+          <p className="text-xs" style={{ color: "#A9B6C3" }}>
+            Get notified before your bus
+          </p>
+        </div>
+      </header>
+
+      <main className="px-4 pt-4">
+        {/* Notification permission banner */}
+        <AnimatePresence>
+          {notifPerm === "default" && "Notification" in window && (
+            <motion.div
+              key="perm-default"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              data-ocid="reminders.notif_permission.panel"
+              className="rounded-2xl p-4 mb-4 flex items-start gap-3"
+              style={{
+                background: "rgba(42,140,255,0.1)",
+                border: "1px solid rgba(42,140,255,0.3)",
+              }}
+            >
+              <BellRing
+                size={18}
+                style={{ color: "#2A8CFF" }}
+                className="shrink-0 mt-0.5"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm font-semibold mb-0.5">
+                  Enable Notifications
+                </p>
+                <p className="text-xs mb-2" style={{ color: "#A9B6C3" }}>
+                  Allow notifications so Bus Trackr can alert you when your bus
+                  is about to depart.
+                </p>
+                <button
+                  type="button"
+                  data-ocid="reminders.allow_notifications.button"
+                  onClick={handleAllowNotifications}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90"
+                  style={{ background: "#2A8CFF", color: "white" }}
+                >
+                  Allow Notifications
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {notifPerm === "denied" && "Notification" in window && (
+            <motion.div
+              key="perm-denied"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              data-ocid="reminders.notif_denied.panel"
+              className="rounded-2xl p-4 mb-4 flex items-start gap-3"
+              style={{
+                background: "rgba(239,68,68,0.1)",
+                border: "1px solid rgba(239,68,68,0.3)",
+              }}
+            >
+              <AlertCircle
+                size={18}
+                style={{ color: "#ef4444" }}
+                className="shrink-0 mt-0.5"
+              />
+              <div className="min-w-0">
+                <p className="text-white text-sm font-semibold mb-0.5">
+                  Notifications Blocked
+                </p>
+                <p className="text-xs" style={{ color: "#A9B6C3" }}>
+                  Browser notifications are blocked. To receive alerts, enable
+                  notifications for this site in your browser settings.
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {notifPerm === "granted" && (
+            <motion.div
+              key="perm-granted"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="rounded-2xl px-4 py-2.5 mb-4 flex items-center gap-2"
+              style={{
+                background: "rgba(34,197,94,0.1)",
+                border: "1px solid rgba(34,197,94,0.25)",
+              }}
+            >
+              <CheckCircle2
+                size={15}
+                style={{ color: "#22c55e" }}
+                className="shrink-0"
+              />
+              <span className="text-xs" style={{ color: "#22c55e" }}>
+                Notifications enabled — you'll be alerted at your reminder time.
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div
+          className="rounded-2xl p-4 mb-6"
+          style={{ background: "#152635", border: "1px solid #24384A" }}
+          data-ocid="reminders.panel"
+        >
+          <h2 className="font-semibold text-white mb-4 flex items-center gap-2">
+            <Plus size={16} style={{ color: "#F28A2A" }} />
+            Set New Reminder
+          </h2>
+
+          <div className="space-y-3">
+            <div>
+              <label
+                htmlFor="rem-depot"
+                className="block text-xs font-medium mb-1.5"
+                style={{ color: "#A9B6C3" }}
+              >
+                Depot *
+              </label>
+              <select
+                id="rem-depot"
+                data-ocid="reminders.depot.select"
+                value={depotId}
+                onChange={(e) => handleDepotChange(e.target.value)}
+                style={inputStyle}
+              >
+                <option value="">Select a Depot</option>
+                {DEPOTS.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="rem-route"
+                className="block text-xs font-medium mb-1.5"
+                style={{ color: "#A9B6C3" }}
+              >
+                Route *
+              </label>
+              <select
+                id="rem-route"
+                data-ocid="reminders.route.select"
+                value={routeId}
+                onChange={(e) => handleRouteChange(e.target.value)}
+                disabled={!depotId}
+                style={{ ...inputStyle, opacity: depotId ? 1 : 0.5 }}
+              >
+                <option value="">Select a Route</option>
+                {routes.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.number}: {r.origin} → {r.destination}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="rem-stop"
+                className="block text-xs font-medium mb-1.5"
+                style={{ color: "#A9B6C3" }}
+              >
+                Stop *
+              </label>
+              <select
+                id="rem-stop"
+                data-ocid="reminders.stop.select"
+                value={stop}
+                onChange={(e) => setStop(e.target.value)}
+                disabled={!routeId}
+                style={{ ...inputStyle, opacity: routeId ? 1 : 0.5 }}
+              >
+                <option value="">Select a Stop</option>
+                {selectedRoute?.stops.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="rem-time"
+                className="block text-xs font-medium mb-1.5"
+                style={{ color: "#A9B6C3" }}
+              >
+                Reminder Time *
+              </label>
+              <input
+                id="rem-time"
+                data-ocid="reminders.time.input"
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="rem-note"
+                className="block text-xs font-medium mb-1.5"
+                style={{ color: "#A9B6C3" }}
+              >
+                Note (optional)
+              </label>
+              <input
+                id="rem-note"
+                data-ocid="reminders.note.input"
+                type="text"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="e.g. Morning commute to office"
+                style={inputStyle}
+              />
+            </div>
+
+            <button
+              type="button"
+              data-ocid="reminders.submit.button"
+              onClick={handleSetReminder}
+              className="w-full py-3 rounded-xl font-semibold text-sm transition-opacity hover:opacity-90"
+              style={{ background: "#F28A2A", color: "white" }}
+            >
+              🔔 Set Reminder
+            </button>
+          </div>
+        </div>
+
+        <h2 className="font-semibold text-white mb-3">Saved Reminders</h2>
+
+        {reminders.length === 0 ? (
+          <div
+            data-ocid="reminders.empty_state"
+            className="rounded-2xl p-8 text-center"
+            style={{ background: "#152635", border: "1px solid #24384A" }}
+          >
+            <Bell
+              size={32}
+              style={{ color: "#24384A" }}
+              className="mx-auto mb-3"
+            />
+            <p className="text-white font-medium">No reminders yet</p>
+            <p className="text-xs mt-1" style={{ color: "#A9B6C3" }}>
+              Set a reminder above to get notified.
+            </p>
+          </div>
+        ) : (
+          <AnimatePresence>
+            <div className="space-y-3" data-ocid="reminders.list">
+              {reminders.map((rem, i) => (
+                <motion.div
+                  key={rem.id}
+                  data-ocid={\`reminders.item.\${i + 1}\`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="rounded-2xl p-4"
+                  style={{ background: "#152635", border: "1px solid #24384A" }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Clock size={13} style={{ color: "#F28A2A" }} />
+                        <span className="font-semibold text-white text-sm">
+                          {rem.time}
+                        </span>
+                        <span
+                          className="px-2 py-0.5 rounded-full text-xs"
+                          style={{
+                            background: "rgba(242,138,42,0.15)",
+                            color: "#F28A2A",
+                          }}
+                        >
+                          {rem.depotName}
+                        </span>
+                      </div>
+                      <p
+                        className="text-xs truncate"
+                        style={{ color: "#A9B6C3" }}
+                      >
+                        {rem.routeLabel}
+                      </p>
+                      <p className="text-xs" style={{ color: "#A9B6C3" }}>
+                        Stop: <span className="text-white">{rem.stop}</span>
+                      </p>
+                      {rem.note && (
+                        <p
+                          className="text-xs mt-1 italic"
+                          style={{ color: "#A9B6C3" }}
+                        >
+                          {rem.note}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      data-ocid={\`reminders.delete_button.\${i + 1}\`}
+                      onClick={() => handleDelete(rem.id)}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-opacity hover:opacity-80"
+                      style={{ background: "rgba(239,68,68,0.15)" }}
+                    >
+                      <Trash2 size={14} style={{ color: "#ef4444" }} />
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </AnimatePresence>
+        )}
+      </main>
+
+      <BottomNav />
+    </div>
+  );
+}
+`}</pre>
+
+      <h3>12.6 src/frontend/src/pages/DepotPage.tsx</h3>
+      <div className="code-label">src/frontend/src/pages/DepotPage.tsx</div>
+      <pre
+        style={codeStyle}
+      >{`import { BottomNav } from "@/components/BottomNav";
+import { getDepotById, getRoutesForDepot } from "@/data/depots";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import {
+  ArrowLeft,
+  Bus,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  MapPin,
+} from "lucide-react";
+import { useState } from "react";
+
+export function DepotPage() {
+  const { id } = useParams({ strict: false }) as { id: string };
+  const navigate = useNavigate();
+  const depot = getDepotById(id ?? "");
+  const routes = getRoutesForDepot(id ?? "");
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  if (!depot) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "#0B1520" }}
+      >
+        <div className="text-center">
+          <p className="text-white text-lg font-semibold">Depot not found</p>
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/stops" })}
+            className="mt-4 text-sm"
+            style={{ color: "#F28A2A" }}
+          >
+            ← Back to Depots
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="min-h-screen pb-24"
+      style={{
+        background: "linear-gradient(180deg, #0B1520 0%, #0F2433 100%)",
+      }}
+    >
+      <header
+        className="flex items-center gap-3 px-4 py-4 sticky top-0 z-40"
+        style={{
+          background: "rgba(11,21,32,0.95)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid #24384A",
+        }}
+      >
+        <button
+          type="button"
+          data-ocid="depot.back.button"
+          onClick={() => navigate({ to: "/stops" })}
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: "#152635" }}
+        >
+          <ArrowLeft size={18} color="white" />
+        </button>
+        <div className="flex-1 min-w-0">
+          <h1 className="font-bold text-white text-lg leading-tight truncate">
+            {depot.name} Depot
+          </h1>
+          <p className="text-xs" style={{ color: "#A9B6C3" }}>
+            {depot.buses} Buses · {depot.routes} Routes
+          </p>
+        </div>
+      </header>
+
+      <div
+        className="mx-4 mt-4 rounded-2xl p-4 flex gap-4"
+        style={{ background: "#152635", border: "1px solid #24384A" }}
+      >
+        <div className="flex-1 text-center">
+          <div className="text-2xl font-bold" style={{ color: "#F28A2A" }}>
+            {depot.buses}
+          </div>
+          <div className="text-xs mt-0.5" style={{ color: "#A9B6C3" }}>
+            Total Buses
+          </div>
+        </div>
+        <div className="w-px" style={{ background: "#24384A" }} />
+        <div className="flex-1 text-center">
+          <div className="text-2xl font-bold" style={{ color: "#2A8CFF" }}>
+            {depot.routes}
+          </div>
+          <div className="text-xs mt-0.5" style={{ color: "#A9B6C3" }}>
+            Active Routes
+          </div>
+        </div>
+        <div className="w-px" style={{ background: "#24384A" }} />
+        <div className="flex-1 text-center">
+          <div className="text-2xl font-bold text-white">{routes.length}</div>
+          <div className="text-xs mt-0.5" style={{ color: "#A9B6C3" }}>
+            Timetables
+          </div>
+        </div>
+      </div>
+
+      <main className="px-4 pt-4">
+        <h2 className="font-semibold text-white mb-3">Bus Timetable</h2>
+        <div className="space-y-3" data-ocid="depot.table">
+          {routes.map((route, i) => (
+            <div
+              key={route.id}
+              data-ocid={\`depot.item.\${i + 1}\`}
+              className="rounded-2xl overflow-hidden"
+              style={{ background: "#152635", border: "1px solid #24384A" }}
+            >
+              <button
+                type="button"
+                className="w-full flex items-center justify-between p-4"
+                onClick={() =>
+                  setExpanded(expanded === route.id ? null : route.id)
+                }
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs"
+                    style={{
+                      background: "rgba(242,138,42,0.15)",
+                      color: "#F28A2A",
+                    }}
+                  >
+                    {route.number.replace("HR-", "")}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-white text-sm truncate">
+                      {route.origin} → {route.destination}
+                    </p>
+                    <p className="text-xs" style={{ color: "#A9B6C3" }}>
+                      {route.number} · {route.stops.length} stops ·{" "}
+                      {route.durationMinutes} min
+                    </p>
+                  </div>
+                </div>
+                {expanded === route.id ? (
+                  <ChevronUp
+                    size={16}
+                    style={{ color: "#A9B6C3" }}
+                    className="shrink-0 ml-2"
+                  />
+                ) : (
+                  <ChevronDown
+                    size={16}
+                    style={{ color: "#A9B6C3" }}
+                    className="shrink-0 ml-2"
+                  />
+                )}
+              </button>
+
+              {expanded === route.id && (
+                <div style={{ borderTop: "1px solid #24384A" }}>
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock size={14} style={{ color: "#2A8CFF" }} />
+                      <span
+                        className="text-xs font-semibold"
+                        style={{ color: "#2A8CFF" }}
+                      >
+                        Departure Times
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {route.departures.map((dep) => {
+                        const now = new Date();
+                        const nowMin = now.getHours() * 60 + now.getMinutes();
+                        const [h, m] = dep.split(":").map(Number);
+                        const depMin = h * 60 + m;
+                        const isPast = depMin < nowMin;
+                        return (
+                          <span
+                            key={dep}
+                            className="px-3 py-1 rounded-full text-xs font-medium"
+                            style={{
+                              background: isPast
+                                ? "#1a2a3a"
+                                : "rgba(42,140,255,0.15)",
+                              color: isPast ? "#4a6a8a" : "#2A8CFF",
+                              border: \`1px solid \${isPast ? "#24384A" : "rgba(42,140,255,0.3)"}\`,
+                            }}
+                          >
+                            {dep}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="px-4 pb-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <MapPin size={14} style={{ color: "#F28A2A" }} />
+                      <span
+                        className="text-xs font-semibold"
+                        style={{ color: "#F28A2A" }}
+                      >
+                        Stops
+                      </span>
+                    </div>
+                    <div>
+                      {route.stops.map((stopName, si) => (
+                        <div
+                          key={stopName}
+                          className="flex items-start gap-3 mb-2"
+                        >
+                          <div className="flex flex-col items-center">
+                            <div
+                              className="w-3 h-3 rounded-full shrink-0"
+                              style={{
+                                background:
+                                  si === 0 || si === route.stops.length - 1
+                                    ? "#F28A2A"
+                                    : "#24384A",
+                                border: "2px solid #F28A2A",
+                              }}
+                            />
+                            {si < route.stops.length - 1 && (
+                              <div
+                                className="w-0.5 h-4"
+                                style={{ background: "#24384A" }}
+                              />
+                            )}
+                          </div>
+                          <span
+                            className="text-xs pb-1"
+                            style={{
+                              color:
+                                si === 0 || si === route.stops.length - 1
+                                  ? "#F2F6FA"
+                                  : "#A9B6C3",
+                            }}
+                          >
+                            {stopName}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="px-4 pb-4">
+                    <button
+                      type="button"
+                      data-ocid={\`depot.reminder.button.\${i + 1}\`}
+                      onClick={() => navigate({ to: "/reminders" })}
+                      className="w-full py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
+                      style={{
+                        background: "rgba(242,138,42,0.15)",
+                        color: "#F28A2A",
+                        border: "1px solid rgba(242,138,42,0.3)",
+                      }}
+                    >
+                      🔔 Set Reminder for this Route
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </main>
+
+      <div
+        className="flex items-center gap-2 mx-4 mt-4 p-3 rounded-xl"
+        style={{
+          background: "rgba(42,140,255,0.1)",
+          border: "1px solid rgba(42,140,255,0.2)",
+        }}
+      >
+        <Bus size={14} style={{ color: "#2A8CFF" }} />
+        <p className="text-xs" style={{ color: "#A9B6C3" }}>
+          Times shown are scheduled. Actual times may vary by 5–15 minutes.
+        </p>
+      </div>
+
+      <BottomNav />
+    </div>
+  );
+}
+`}</pre>
+
+      <h3>12.7 src/backend/main.mo</h3>
+      <div className="code-label">src/backend/main.mo</div>
+      <pre style={codeStyle}>{`actor {
+  private var version : Nat = 0;
+
+  public query func ping() : async Text {
+    "Bus Trackr canister is running. Version: " # debug_show(version)
+  };
+
+  public query func getAppInfo() : async {
+    name: Text;
+    description: Text;
+    districts: Nat;
+    totalServices: Nat;
+  } {
+    {
+      name = "Bus Trackr";
+      description = "Haryana Roadways Real-Time Timetable System";
+      districts = 22;
+      totalServices = 15000;
+    }
+  };
+
+  system func preupgrade() {
+    version += 1;
+  };
+};`}</pre>
+
+      {/* 13. TESTING */}
+      <div className="page-break" />
+      <h2>
+        <span className="section-num">13.</span> Testing &amp; Validation
       </h2>
       <table>
         <thead>
@@ -1160,10 +2480,10 @@ actor BusTrackr {
         </tbody>
       </table>
 
-      {/* 13. RESULTS */}
+      {/* 14. RESULTS */}
       <div className="page-break" />
       <h2>
-        <span className="section-num">13.</span> Results
+        <span className="section-num">14.</span> Results
       </h2>
       <p>
         The completed Bus Trackr application achieves the following measurable
@@ -1208,9 +2528,9 @@ actor BusTrackr {
         with all features validated and all 22 district datasets confirmed live.
       </div>
 
-      {/* 14. LIMITATIONS */}
+      {/* 15. LIMITATIONS */}
       <h2>
-        <span className="section-num">14.</span> Limitations &amp; Future Scope
+        <span className="section-num">15.</span> Limitations &amp; Future Scope
       </h2>
       <h3>Current Limitations</h3>
       <ul>
@@ -1264,9 +2584,9 @@ actor BusTrackr {
         </li>
       </ul>
 
-      {/* 15. CONCLUSION */}
+      {/* 16. CONCLUSION */}
       <h2>
-        <span className="section-num">15.</span> Conclusion
+        <span className="section-num">16.</span> Conclusion
       </h2>
       <p>
         Bus Trackr successfully demonstrates that a world-class public transit
@@ -1291,10 +2611,10 @@ actor BusTrackr {
         to the public transit information gap in Haryana.
       </p>
 
-      {/* 16. REFERENCES */}
+      {/* 17. REFERENCES */}
       <div className="page-break" />
       <h2>
-        <span className="section-num">16.</span> References
+        <span className="section-num">17.</span> References
       </h2>
       <ol>
         <li>
